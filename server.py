@@ -87,6 +87,7 @@ import notifier
 import tts
 import ears
 import other_brains
+import composio_bridge
 from brain import Brain, BrainConfig, MAX_BOOT_PROJECTS
 from speech import Priority, SpeechScheduler
 
@@ -2355,6 +2356,10 @@ READ_BACK_TOOLS = {"steer_session", "answer_dialog", "run_command"}
 # after the handler returns rather than inside each handler, so a reader
 # added later cannot forget to do it — the data below is the whole decision.
 TAINTING_TOOLS = {
+    # Dreyvis: an app's data (an email, a calendar invite, a Slack message) and
+    # another AI's answer are somebody else's words, same as a web page.
+    "composio_execute": "something from one of your connected apps",
+    "ask_model": "another AI's answer",
     # Repository files. A source comment or a README can carry an instruction
     # aimed squarely at the brain.
     "read_file": "a file in one of your projects",
@@ -6146,6 +6151,13 @@ async def tool_ask_model(args: dict) -> str:
 
 
 TOOL_HANDLERS["ask_model"] = tool_ask_model
+
+# Composio: 1,000+ apps (Gmail, Calendar, Drive, Slack...) through Drey's Composio login.
+TOOL_HANDLERS["composio_search"] = composio_bridge.search
+TOOL_HANDLERS["composio_execute"] = composio_bridge.execute
+# It can send email, post, delete. Only on a turn the user drove, and never after
+# the turn has read outside text (an email it just fetched cannot tell it to reply).
+ACTING_TOOLS.add("composio_execute")
 
 
 # --- "what are you connected to?" ----------------------------------------

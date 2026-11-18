@@ -179,6 +179,27 @@ class DreyvisSpeechRecognition {
   }
 }
 
+// A button to switch between the orb and Ethan's dashboard (runs, sessions, memory,
+// specs, projects, usage), placed clear of the window's traffic-light buttons.
+window.addEventListener("DOMContentLoaded", () => {
+  const onDashboard = location.pathname.startsWith("/dashboard");
+  const b = document.createElement("button");
+  b.type = "button";
+  b.textContent = onDashboard ? "Orb" : "Dashboard";
+  b.title = onDashboard ? "Back to the orb (Cmd+1)" : "Open the dashboard (Cmd+2)";
+  b.setAttribute("aria-label", b.title);
+  Object.assign(b.style, {
+    position: "fixed", zIndex: "2147483647", font: "500 14px -apple-system, BlinkMacSystemFont, sans-serif",
+    color: "#cfe0ff", background: "rgba(10,18,32,0.85)", border: "1px solid #1f3352", borderRadius: "8px",
+    padding: "0 16px", height: "36px", cursor: "pointer",
+    ...(onDashboard ? { right: "16px", bottom: "16px" } : { left: "88px", top: "16px" }),
+  });
+  b.addEventListener("focus", () => { b.style.outline = "2px solid #5aa0ff"; b.style.outlineOffset = "2px"; });
+  b.addEventListener("blur", () => { b.style.outline = "none"; });
+  b.addEventListener("click", () => ipcRenderer.send("dreyvis:show", onDashboard ? "" : "dashboard"));
+  document.body.appendChild(b);
+});
+
 // Load Whisper now with a quiet half second, so the first real phrase isn't a 30 second wait.
 window.addEventListener("load", () => {
   fetch("/api/transcribe", { method: "POST", headers: { "Content-Type": "application/octet-stream" },

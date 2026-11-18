@@ -2,7 +2,9 @@
 
 **A voice assistant for your Mac that runs on the Claude subscription you already pay for.**
 
-![The Dreyvis orb: two thousand blue particles holding the shape of a sphere, listening](docs/images/dreyvis-orb.png)
+![The Dreyvis orb while it speaks: two thousand blue particles that swell and pull together with each phrase, then relax in the pauses](docs/images/dreyvis-orb.gif)
+
+[Try the orb live](https://dreydrey9000.github.io/dreyvis/orb/)
 
 You talk, Dreyvis answers out loud. It can check on your Claude Code sessions, start builds, read your screen, remember things, and hand a question to Codex, Grok or DeepSeek when you want a second opinion.
 
@@ -11,7 +13,9 @@ Dreyvis is Drey Thomas's version of [JARVIS by Ethan Rogers](https://github.com/
 - **Its own Mac app.** A window, a menu-bar switch to turn it on and off, and Option+Space to mute the mic.
 - **Free local voice.** Kokoro speaks, so no Fish Audio key is needed.
 - **Free local ears.** Whisper on Apple Silicon hears you, so no Chrome is needed.
-- **Other AIs on call.** "Ask Codex…", "What does Grok think…", "Ask DeepSeek…".
+- **Other AIs on call.** "Ask Codex…", "What does Grok think…", "Ask DeepSeek…". Grok runs in a macOS sandbox.
+- **Your apps through Composio.** Gmail, Calendar, Drive, Slack and 1,000 more with two tools. Anything that sends or changes something waits for your spoken yes.
+- **Ethan's full dashboard inside the app.** Every run and session, his memory and how much of your plan is left, one click from the orb (Cmd+2).
 
 ## How it fits together
 

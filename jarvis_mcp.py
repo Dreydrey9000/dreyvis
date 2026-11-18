@@ -450,6 +450,37 @@ TOOL_SPECS = [
         },
     },
     {
+        "name": "composio_search",
+        "description": (
+            "Find an action in the user's connected apps through Composio: Gmail, "
+            "Google Calendar, Drive, Slack, GitHub, Notion and 1,000 more. Give "
+            "it what the user wants in plain words ('latest emails', 'what's on "
+            "my calendar tomorrow'). Returns the action name and the inputs it "
+            "needs. Always call this before composio_execute."),
+        "inputSchema": {
+            "type": "object",
+            "properties": {"query": {"type": "string"}},
+            "required": ["query"],
+        },
+    },
+    {
+        "name": "composio_execute",
+        "description": (
+            "Run one Composio action found with composio_search, e.g. "
+            "GMAIL_FETCH_EMAILS with {\"max_results\": 5}. Reading is fine to "
+            "do when asked. Anything that sends, posts, books, deletes or pays: "
+            "read the exact thing back to the user and wait for a spoken yes "
+            "in a NEW turn before calling this."),
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "slug": {"type": "string", "description": "The action name, like GMAIL_FETCH_EMAILS."},
+                "arguments": {"type": "object", "description": "The action's inputs."},
+            },
+            "required": ["slug", "arguments"],
+        },
+    },
+    {
         "name": "usage_status",
         "description": (
             "How much of the user's Claude subscription is used: the five-hour "

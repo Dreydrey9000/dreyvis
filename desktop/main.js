@@ -1,7 +1,7 @@
 // Dreyvis desktop app: its own window, a menu-bar switch, and a talk hotkey.
 // The brain, voice and ears run in the Dreyvis server (launchd job com.drey.dreyvis);
 // this app turns that service on and off and shows the orb.
-const { app, BrowserWindow, Tray, Menu, globalShortcut, session, systemPreferences, nativeImage, shell } = require("electron");
+const { app, BrowserWindow, Tray, Menu, globalShortcut, session, systemPreferences, nativeImage, shell, ipcMain } = require("electron");
 const { execFile } = require("node:child_process");
 const path = require("node:path");
 const fs = require("node:fs");
@@ -74,11 +74,33 @@ function refreshTray() {
     { label: serverOn ? "Turn off" : "Turn on", click: () => setServer(!serverOn) },
     { type: "separator" },
     { label: muted ? "Unmute mic" : "Mute mic", accelerator: TALK_KEY, enabled: serverOn, click: () => setMuted(!muted) },
-    { label: "Open dashboard", enabled: serverOn, click: () => shell.openExternal(URL + "dashboard") },
+    { label: "Open dashboard", enabled: serverOn, click: () => showPage("dashboard") },
     { type: "separator" },
     { label: "Open app at login", type: "checkbox", checked: app.getLoginItemSettings().openAtLogin,
       click: (item) => app.setLoginItemSettings({ openAtLogin: item.checked }) },
     { label: "Quit Dreyvis app", click: () => app.quit() },
+  ]));
+}
+
+// The orb ("") and Ethan's dashboard ("dashboard": runs, sessions, memory, specs, projects, usage)
+// both open inside the Dreyvis window.
+function showPage(page) {
+  showWindow();
+  if (serverOn) win.loadURL(URL + page);
+}
+
+function buildAppMenu() {
+  Menu.setApplicationMenu(Menu.buildFromTemplate([
+    { role: "appMenu" },
+    { role: "editMenu" },
+    { label: "View", submenu: [
+      { label: "Orb", accelerator: "CmdOrCtrl+1", click: () => showPage("") },
+      { label: "Dashboard", accelerator: "CmdOrCtrl+2", click: () => showPage("dashboard") },
+      { type: "separator" },
+      { role: "reload" },
+      { role: "togglefullscreen" },
+    ] },
+    { role: "windowMenu" },
   ]));
 }
 
@@ -130,6 +152,8 @@ app.whenReady().then(async () => {
     permission === "media" && String(origin).startsWith(URL.slice(0, -1)));
   await systemPreferences.askForMediaAccess("microphone");
 
+  buildAppMenu();
+  ipcMain.on("dreyvis:show", (_e, page) => showPage(page === "dashboard" ? "dashboard" : ""));
   const icon = path.join(__dirname, "trayTemplate.png");
   tray = new Tray(fs.existsSync(icon) ? nativeImage.createFromPath(icon) : nativeImage.createEmpty());
   serverOn = await isServerUp();

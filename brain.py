@@ -65,6 +65,8 @@ ALLOWED_TOOLS = [
     "mcp__jarvis__github_repo",
     "mcp__jarvis__usage_status",
     "mcp__jarvis__ask_model",
+    "mcp__jarvis__composio_search",
+    "mcp__jarvis__composio_execute",
     "mcp__jarvis__connections",
     "mcp__jarvis__enable_session_inbox",
     "mcp__jarvis__repo_overview",

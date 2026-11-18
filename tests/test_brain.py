@@ -64,7 +64,7 @@ def test_command_has_exact_flags(tmp_path):
         "mcp__jarvis__read_page,mcp__jarvis__look_at_page,"
         "mcp__jarvis__what_is_on_screen,mcp__jarvis__look_at_screen,"
         "mcp__jarvis__github_repo,"
-        "mcp__jarvis__usage_status,mcp__jarvis__ask_model,mcp__jarvis__connections,"
+        "mcp__jarvis__usage_status,mcp__jarvis__ask_model,mcp__jarvis__composio_search,mcp__jarvis__composio_execute,mcp__jarvis__connections,"
         "mcp__jarvis__enable_session_inbox,"
         "mcp__jarvis__repo_overview,mcp__jarvis__search_repo,"
         "mcp__jarvis__read_file,mcp__jarvis__open_in_editor,"

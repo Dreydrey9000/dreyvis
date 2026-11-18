@@ -8,6 +8,11 @@
 - Standalone orb demo at dreydrey9000.github.io/dreyvis/orb, also saved in Drey Design.
 - Background service `com.drey.dreyvis`, so the server starts at login and restarts if it crashes.
 
+- Composio bridge (composio_search, composio_execute): Gmail and 1,000+ apps; execute is an acting tool and its results count as outside text.
+- 1BB connected through connections.json.
+- Dashboard opens inside the app: a button on the orb, Cmd+1 / Cmd+2, and the menu-bar item.
+- Animated orb GIF in the README.
+
 ### Fixed
 - Grok runs inside a macOS sandbox (grok.sb): its CLI can run commands and its tool flags don't stop that, so an injected question could have made it act on the Mac.
 - Codex, Grok and DeepSeek calls get a minimal environment instead of all of Dreyvis's settings.
