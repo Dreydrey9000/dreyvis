@@ -226,7 +226,7 @@ function renderUsage(snap: UsageSnapshot | null): void {
     m.usagePill.hidden = false;
     m.usagePill.textContent = "no reading";
     setTone(m.usagePill, "warn");
-    m.usageNote.textContent = "nothing measured since JARVIS started";
+    m.usageNote.textContent = "nothing measured since Dreyvis started";
   } else if (snap.stale) {
     m.usagePill.hidden = false;
     m.usagePill.textContent = "stale";
@@ -380,7 +380,7 @@ function paint(): void {
   renderInto(
     "history-list", "history-meta",
     runs.filter((r) => !ACTIVE.has(r.status)),
-    "No runs yet. Ask JARVIS to build something.",
+    "No runs yet. Ask Dreyvis to build something.",
   );
 }
 
@@ -409,7 +409,7 @@ async function reconcile(): Promise<void> {
     showBanner(null);
   } catch (e) {
     console.error("[dashboard] reconcile failed", e);
-    showBanner("Cannot reach the JARVIS server.");
+    showBanner("Cannot reach the Dreyvis server.");
   }
   await refreshUsage();
 }
@@ -522,7 +522,7 @@ document.addEventListener("DOMContentLoaded", () => {
       appendEvent(runId, seq, kind, payload);
     },
     onConnectionChange: (connected) =>
-      showBanner(connected ? null : "Reconnecting to JARVIS…"),
+      showBanner(connected ? null : "Reconnecting to Dreyvis…"),
   });
 
   // Elapsed time ticks locally so active rows stay honest between frames.

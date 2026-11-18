@@ -131,7 +131,7 @@ function paintPath(path: string): void {
   pathRow.append(code, copy);
 
   holder.append(
-    el("div", "memory-hint", "Plain Markdown on disk. Edit it directly — JARVIS reads it fresh every conversation."),
+    el("div", "memory-hint", "Plain Markdown on disk. Edit it directly — Dreyvis reads it fresh every conversation."),
     pathRow,
   );
 }

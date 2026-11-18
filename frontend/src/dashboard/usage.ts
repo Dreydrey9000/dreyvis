@@ -120,7 +120,7 @@ function renderLimits(host: HTMLElement): void {
   if (!limits.measured) {
     note.append(pill("no reading", "warn"));
     note.append(el("span", undefined,
-      "JARVIS only learns where the windows stand while a turn is running, "
+      "Dreyvis only learns where the windows stand while a turn is running, "
       + "and none has run since he started. Nothing has been measured — "
       + "which is not the same as nothing being used."));
   } else if (limits.stale) {
@@ -338,7 +338,7 @@ function renderSessions(host: HTMLElement, meta: (t: string) => void): void {
   if (scan.sessions.length === 0) {
     meta("");
     host.append(emptyState(scan.measured
-      ? "No conversations of yours on this machine — only JARVIS's own work, "
+      ? "No conversations of yours on this machine — only Dreyvis's own work, "
         + "which is below."
       : "Nothing measured yet."));
     return;
