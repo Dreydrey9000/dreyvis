@@ -85,6 +85,8 @@ import dialog
 import jarvis_memory
 import notifier
 import tts
+import ears
+import other_brains
 from brain import Brain, BrainConfig, MAX_BOOT_PROJECTS
 from speech import Priority, SpeechScheduler
 
@@ -462,6 +464,9 @@ _last_greeting_time: float = 0
 
 async def synthesize_speech(text: str) -> Optional[bytes]:
     """Generate speech audio from text using Fish Audio TTS."""
+    if tts.kokoro_enabled():      # Drey's swap: local Kokoro voice, no key
+        r = await tts.synthesize_chunk(text, api_key="", voice_id="")
+        return r.audio if r else None
     if not FISH_API_KEY:
         log.warning("FISH_API_KEY not set, skipping TTS")
         return None
@@ -1850,6 +1855,23 @@ app.add_middleware(web_auth.OriginGuard)
 @app.get("/api/health")
 async def health():
     return {"status": "online", "name": "JARVIS", "version": "0.1.0"}
+
+
+@app.post("/api/transcribe")
+async def transcribe_audio(request: Request):
+    """Dreyvis desktop ears: raw float32 16 kHz mono PCM in, {"text"} out.
+
+    A POST, so OriginGuard holds it to JARVIS's own origins like every other write.
+    """
+    if not ears.enabled():
+        raise HTTPException(status_code=503, detail="Local ears are not set up (EARS_PYTHON).")
+    body = await request.body()
+    if not body or len(body) > ears.MAX_BYTES or len(body) % 4:
+        raise HTTPException(status_code=400, detail="Expected up to 30 s of float32 16 kHz mono audio.")
+    text = await ears.transcribe(body)
+    if text is None:
+        raise HTTPException(status_code=502, detail="Transcription failed.")
+    return {"text": text}
 
 
 @app.post("/api/tts-test")
@@ -6118,6 +6140,14 @@ TOOL_HANDLERS["usage_status"] = tool_usage_status
 # depend on who is talking, so it is deliberately NOT an acting tool.
 
 
+async def tool_ask_model(args: dict) -> str:
+    """Dreyvis: hand a question to Codex, Grok or DeepSeek (other_brains.py)."""
+    return await other_brains.ask(str(args.get("brain", "")), str(args.get("question", "")))
+
+
+TOOL_HANDLERS["ask_model"] = tool_ask_model
+
+
 # --- "what are you connected to?" ----------------------------------------
 #
 # The answer comes from what ACTUALLY started, never from a list written down
@@ -6879,7 +6909,7 @@ async def api_settings_status():
         "server_port": 8340,
         "uptime_seconds": int(time.time() - _session_start),
         "env_keys_set": {
-            "fish_audio": bool(env_dict.get("FISH_API_KEY", "").strip() and env_dict.get("FISH_API_KEY", "") != "your-fish-audio-api-key-here"),
+            "fish_audio": tts.kokoro_enabled() or bool(env_dict.get("FISH_API_KEY", "").strip() and env_dict.get("FISH_API_KEY", "") != "your-fish-audio-api-key-here"),
             "fish_voice_id": bool(env_dict.get("FISH_VOICE_ID", "").strip()),
             "user_name": env_dict.get("USER_NAME", ""),
         },

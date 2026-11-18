@@ -1,0 +1,9 @@
+flowchart LR
+  You((You)) -->|voice| App[Dreyvis.app<br/>Electron window + menu bar]
+  App -->|each phrase| Ears[Whisper<br/>local speech to text]
+  App <-->|WebSocket| Server[Dreyvis server<br/>Python, port 8340]
+  Server --> Brain[Claude Code<br/>your subscription]
+  Brain -->|tools| Tools[Sessions, builds,<br/>screen, memory]
+  Brain -->|ask_model| Others[Codex / Grok / DeepSeek]
+  Server --> Voice[Kokoro<br/>local text to speech]
+  Voice -->|audio| App

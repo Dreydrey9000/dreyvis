@@ -430,6 +430,26 @@ TOOL_SPECS = [
         },
     },
     {
+        "name": "ask_model",
+        "description": (
+            "Hand a question to another AI and get its answer back: 'codex' "
+            "(OpenAI's Codex, good for code and second opinions), 'grok' "
+            "(xAI's Grok, good for current events and a different take), or "
+            "'deepseek'. Use it when the user names one of them ('ask Codex', "
+            "'what does Grok think') or wants a second opinion. It only reads "
+            "and answers; it changes nothing on the Mac. Takes up to a few "
+            "minutes. Say whose answer it is, in one or two sentences."),
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "brain": {"type": "string", "enum": ["codex", "grok", "deepseek"]},
+                "question": {"type": "string",
+                             "description": "The full question, with any context it needs."},
+            },
+            "required": ["brain", "question"],
+        },
+    },
+    {
         "name": "usage_status",
         "description": (
             "How much of the user's Claude subscription is used: the five-hour "

@@ -1,0 +1,9 @@
+{
+  "name": "dreyvis-desktop",
+  "productName": "Dreyvis",
+  "version": "0.1.0",
+  "private": true,
+  "main": "main.js",
+  "scripts": { "start": "electron ." },
+  "devDependencies": { "electron": "45.3.4" }
+}

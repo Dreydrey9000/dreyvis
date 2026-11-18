@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- Starts Dreyvis at login and restarts it if it crashes. Open http://127.0.0.1:8340 to use it.
+     Turn off: launchctl bootout gui/$(id -u)/com.drey.dreyvis -->
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>com.drey.dreyvis</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/path/to/dreyvis/start.sh</string>
+  </array>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key><string>/Users/YOU/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+    <key>HOME</key><string>/Users/YOU</string>
+  </dict>
+  <key>RunAtLoad</key><true/>
+  <key>KeepAlive</key><true/>
+  <key>ThrottleInterval</key><integer>30</integer>
+  <key>ProcessType</key><string>Background</string>
+  <key>StandardOutPath</key><string>/Users/YOU/Library/Logs/dreyvis.log</string>
+  <key>StandardErrorPath</key><string>/Users/YOU/Library/Logs/dreyvis.log</string>
+</dict>
+</plist>
