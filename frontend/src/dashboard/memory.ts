@@ -246,7 +246,7 @@ async function reconcile(): Promise<void> {
       return;
     }
     console.error("[memory] reconcile failed", e);
-    showBanner("Cannot reach the JARVIS server.");
+    showBanner("Cannot reach the Dreyvis server.");
     return;
   }
 

@@ -174,7 +174,7 @@ socket.onMessage((msg) => {
       if (currentState !== "speaking") transition("speaking");
       audioPlayer.enqueue(data, Number(msg.utt), Number(msg.idx));
     }
-    if (msg.text) console.log("[JARVIS]", msg.text);
+    if (msg.text) console.log("[Dreyvis]", msg.text);
   } else if (type === "stop") {
     audioPlayer.stop();
     transition(isMuted ? "idle" : "listening");
@@ -188,7 +188,7 @@ socket.onMessage((msg) => {
     else if (state === "idle") transition(isMuted ? "idle" : "listening");
   } else if (type === "text") {
     // A chunk TTS could not voice: show it instead of losing it
-    console.log("[JARVIS]", msg.text);
+    console.log("[Dreyvis]", msg.text);
     statusEl.textContent = String(msg.text);
   } else if (type === "notice") {
     // Shown, never spoken. The server sends one when it is about to be busy

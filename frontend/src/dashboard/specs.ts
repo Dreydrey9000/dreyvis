@@ -76,7 +76,7 @@ const PROJECT_STATE: Record<ReviewState, StateCopy> = {
   },
   planning: {
     tone: "accent", label: "planning",
-    line: "Approved. JARVIS is writing the plan.",
+    line: "Approved. Dreyvis is writing the plan.",
   },
   building: {
     tone: "accent", label: "building",
@@ -91,7 +91,7 @@ const PROJECT_STATE: Record<ReviewState, StateCopy> = {
 const APPROVAL: Record<ApprovalState, StateCopy> = {
   awaiting: {
     tone: "warn", label: "awaiting approval",
-    line: "Nobody has approved this yet. Read it, then tell JARVIS "
+    line: "Nobody has approved this yet. Read it, then tell Dreyvis "
         + "“approved” — or name a section to change.",
   },
   approved: {
@@ -225,7 +225,7 @@ function paintMaster(): void {
 
   if (projects.length === 0) {
     list.append(emptyState(
-      "Nothing to review yet. Talk an idea through with JARVIS and the "
+      "Nothing to review yet. Talk an idea through with Dreyvis and the "
       + "design he writes down will appear here."));
   } else {
     for (const project of projects) list.append(projectRow(project));
@@ -337,7 +337,7 @@ function paintDetail(doc: SpecDocument | null, message?: string): void {
     title.textContent = "Document";
     if (meta) meta.textContent = "";
     body.replaceChildren(emptyState(
-      message ?? "Pick a project on the left to read what JARVIS wrote."));
+      message ?? "Pick a project on the left to read what Dreyvis wrote."));
     return;
   }
 
@@ -425,7 +425,7 @@ async function loadDocument(): Promise<void> {
     }
     paintDetail(null,
       "Could not read that document. It may have been moved or renamed on "
-      + "disk — JARVIS rewrites these files as you talk.");
+      + "disk — Dreyvis rewrites these files as you talk.");
   }
 }
 
@@ -442,7 +442,7 @@ async function reconcile(): Promise<void> {
       return;
     }
     console.error("[specs] reconcile failed", e);
-    showBanner("Cannot reach the JARVIS server.");
+    showBanner("Cannot reach the Dreyvis server.");
     return;
   }
 
@@ -480,7 +480,7 @@ export function initSpecs(): void {
   connectSpecsLive({
     onReconcile: () => void reconcile(),
     onConnectionChange: (connected) => {
-      if (!connected) showBanner("Reconnecting to JARVIS…");
+      if (!connected) showBanner("Reconnecting to Dreyvis…");
     },
   });
 }

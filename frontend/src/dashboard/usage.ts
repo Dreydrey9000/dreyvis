@@ -420,7 +420,7 @@ function renderBackground(host: HTMLElement, meta: (t: string) => void): void {
     r.setTitle(agentName(agent));
     r.setSub(session.project || shortId(session.session_id));
 
-    if (session.own) r.addTrail(pill("JARVIS's own", "idle", "ghost"));
+    if (session.own) r.addTrail(pill("Dreyvis's own", "idle", "ghost"));
     // An agent dispatched by another agent, not by the conversation. Only
     // shown when the sidecar actually said so — depth 0 means no sidecar,
     // which is unknown depth, not top level.
@@ -444,7 +444,7 @@ function renderBackground(host: HTMLElement, meta: (t: string) => void): void {
 function renderOwn(host: HTMLElement): void {
   host.replaceChildren();
   host.append(el("div", "usage-note",
-    "JARVIS's brain and the one-shot runs he spawns register as Claude Code "
+    "Dreyvis's brain and the one-shot runs he spawns register as Claude Code "
     + "sessions like any other, and were once counted as the user's "
     + "conversations — 12 became 16. They are kept here so they are visible "
     + "without being mixed into the figures above."));
@@ -483,7 +483,7 @@ function renderOwn(host: HTMLElement): void {
   host.append(el("div", "usage-footnote",
     `The CLI priced today's runs at $${runs.total_cost_usd.toFixed(2)} — that `
     + "is what these tokens WOULD have cost through the API. Nothing was "
-    + "billed: JARVIS runs on the subscription and the brain scrubs every "
+    + "billed: Dreyvis runs on the subscription and the brain scrubs every "
     + "ANTHROPIC_* variable so the CLI cannot reach a key. Treat it as a "
     + "sense of scale, not a bill."));
 }
@@ -511,7 +511,7 @@ function build(): Sections | null {
   const modelsPanel = panel("By Model");
   const sessionsPanel = panel("By Conversation");
   const backgroundPanel = panel("Background & Subagents");
-  const ownPanel = panel("JARVIS's Own Work", { quiet: true });
+  const ownPanel = panel("Dreyvis's Own Work", { quiet: true });
 
   const overallBody = el("div");
   overallPanel.body.replaceChildren(overallBody, sparkHost);
