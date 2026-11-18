@@ -1,0 +1,16 @@
+; macOS sandbox for Grok when Dreyvis asks it a question (other_brains.py).
+; Grok's CLI is an agent with shell and file tools, and its allowlist flags do not
+; remove them. This lets it talk to the network and keep its own login/session files,
+; and nothing else: it cannot start other programs or write files anywhere else.
+(version 1)
+(allow default)
+(deny process-exec)
+(allow process-exec (subpath (param "GROK_DIR")))
+(deny file-write*)
+(allow file-write*
+  (subpath (param "GROK_HOME"))
+  (subpath (param "WORK_DIR"))
+  (subpath "/private/var/folders")
+  (literal "/dev/null")
+  (literal "/dev/tty")
+  (regex #"^/dev/fd/"))

@@ -35,7 +35,9 @@ def _bin(name: str) -> Optional[str]:
 
 
 async def _run(args: list[str], cwd: str) -> tuple[int, str, str]:
-    env = {k: v for k, v in os.environ.items() if not k.startswith(("ANTHROPIC_", "CLAUDE"))}
+    # Minimal environment: enough for the CLI to find its own login, nothing else of ours.
+    keep = ("HOME", "USER", "LOGNAME", "PATH", "LANG", "TMPDIR", "SHELL")
+    env = {k: os.environ[k] for k in keep if k in os.environ}
     proc = await asyncio.create_subprocess_exec(
         *args, cwd=cwd, env=env, stdin=asyncio.subprocess.DEVNULL,
         stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
@@ -64,7 +66,15 @@ async def _grok(question: str) -> str:
     if not exe:
         return "Grok is not installed."
     with tempfile.TemporaryDirectory() as tmp:
-        code, out, err = await _run([exe, "-p", NOTE + question], tmp)
+        # Grok's CLI is an agent with shell and file tools, and its --tools allowlist does
+        # not remove them (tested 2026-11-18). So it runs inside a macOS sandbox (grok.sb)
+        # that blocks starting other programs and writing outside its own folder.
+        real = os.path.realpath(exe)
+        code, out, err = await _run([
+            "/usr/bin/sandbox-exec", "-f", str(Path(__file__).parent / "grok.sb"),
+            "-D", f"GROK_DIR={os.path.dirname(real)}", "-D", f"GROK_HOME={HOME / '.grok'}",
+            "-D", f"WORK_DIR={os.path.realpath(tmp)}",
+            real, "--permission-mode", "plan", "--disable-web-search", "-p", NOTE + question], tmp)
     return out.strip() or f"Grok failed ({code}): {err.strip()[-300:]}"
 
 

@@ -8,6 +8,10 @@
 - Standalone orb demo at dreydrey9000.github.io/dreyvis/orb, also saved in Drey Design.
 - Background service `com.drey.dreyvis`, so the server starts at login and restarts if it crashes.
 
+### Fixed
+- Grok runs inside a macOS sandbox (grok.sb): its CLI can run commands and its tool flags don't stop that, so an injected question could have made it act on the Mac.
+- Codex, Grok and DeepSeek calls get a minimal environment instead of all of Dreyvis's settings.
+
 ### Changed
 - Renamed to Dreyvis: app, window, persona, process name.
 - The settings panel no longer asks for a Fish Audio key when the local voice is on.
