@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dreyvis Orb</title>
+  <meta name="description" content="The Dreyvis orb: 2,000 particles in Three.js that listen, think and pulse when the assistant speaks.">
+  <style>
+    html, body { margin: 0; height: 100%; background: #050508; overflow: hidden;
+      font: 16px/1.5 -apple-system, BlinkMacSystemFont, sans-serif; color: #9fb4d9; }
+    canvas { display: block; }
+    .bar { position: fixed; left: 0; right: 0; bottom: 24px; display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; padding: 0 16px; }
+    button { font: inherit; color: #d8e4ff; background: #0b1220; border: 1px solid #1f3352; border-radius: 8px;
+      padding: 8px 16px; min-height: 44px; cursor: pointer; }
+    button[aria-pressed="true"] { border-color: #5aa0ff; color: #fff; }
+    button:focus-visible { outline: 2px solid #5aa0ff; outline-offset: 2px; }
+    .credit { position: fixed; top: 16px; left: 16px; right: 16px; font-size: 16px; color: #5d7396; }
+    .credit a { color: #8fb3e8; }
+  </style>
+</head>
+<body>
+  <canvas id="orb" aria-label="Animated particle orb"></canvas>
+  <p class="credit">Dreyvis orb. Code by Ethan Rogers (<a href="https://github.com/ethanplusai/jarvis">JARVIS</a>), personal non-commercial license.</p>
+  <div class="bar" role="group" aria-label="Orb state">
+    <button data-state="idle">Idle</button>
+    <button data-state="listening">Listening</button>
+    <button data-state="thinking">Thinking</button>
+    <button data-state="speaking" aria-pressed="true">Speaking</button>
+    <button data-state="compacting">Resting</button>
+  </div>
+  <script type="module" src="/src/orb-demo.ts"></script>
+</body>
+</html>
