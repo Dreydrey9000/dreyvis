@@ -33,13 +33,18 @@ NO_ACCESS = ("I can't open your Messages yet, sir: macOS hasn't given me Full Di
              "Access. It's one switch in System Settings, under Privacy and Security.")
 
 _heard = 0                         # how many times Drey has spoken; server.py bumps it
+_last_said = ""                    # his most recent words
 _staged: dict | None = None        # {"to", "handle", "message", "at": _heard when staged}
+# His next words after the read-back must be a clear yes, and not a "no, wait".
+_YES = re.compile(r"\b(yes|yeah|yep|yup|sure|send( it)?|go ahead|do it|ok(ay)?|confirm(ed)?|please do)\b", re.I)
+_NO = re.compile(r"\b(no|nope|don'?t|do not|cancel|stop|wait|hold on|change)\b", re.I)
 
 
-def heard() -> None:
-    """Called by server.py each time Drey says something."""
-    global _heard
+def heard(text: str = "") -> None:
+    """Called by server.py each time Drey says something, with what he said."""
+    global _heard, _last_said
     _heard += 1
+    _last_said = text
 
 
 def _digits(s: str) -> str:
@@ -136,7 +141,8 @@ def _read_blocking(who: str, limit: int) -> str:
         return f"No texts with {who}, sir." if who else "No texts at all, sir."
     lines = []
     for date, mine, text, body, handle in reversed(rows):
-        words = _text_of(text, body).strip() or "(a photo or attachment)"
+        # One line per message: a text can't fake other lines of this list.
+        words = re.sub(r"\s+", " ", _text_of(text, body)).strip() or "(a photo or attachment)"
         ago = int((time.time() - (date / 1e9 + APPLE_EPOCH)) / 60)
         when = f"{ago} min ago" if ago < 90 else f"{ago // 60} h ago" if ago < 48 * 60 else f"{ago // 1440} days ago"
         sender = "You" if mine else _who(handle or "", book)
@@ -152,7 +158,9 @@ async def send_text(args: dict) -> str:
     if len(message) > MAX_TEXT:
         return "That's too long for one text, sir."
     same = _staged and _staged["to"] == to and _staged["message"] == message
-    if not same or _heard <= _staged["at"]:
+    # Sends only on the turn right after the read-back, and only if he said yes.
+    said_yes = bool(_YES.search(_last_said)) and not _NO.search(_last_said)
+    if not same or _heard != _staged["at"] + 1 or not said_yes:
         handle, name = await asyncio.to_thread(_resolve, to)
         if handle is None:
             return name
@@ -199,9 +207,17 @@ if __name__ == "__main__":
             r1 = await send_text({"to": "Test", "message": "hi"})
             r2 = await send_text({"to": "Test", "message": "hi"})          # same turn: must not send
             assert r1.startswith("STAGED") and r2.startswith("STAGED") and not spawn.called, (r1, r2)
-            heard()
-            r3 = await send_text({"to": "Test", "message": "hello"})       # different words: re-stage
-            assert r3.startswith("STAGED") and not spawn.called
+            heard("what's the weather")                                      # spoke, but not a yes
+            r3 = await send_text({"to": "Test", "message": "hi"})
+            assert r3.startswith("STAGED") and not spawn.called, r3
+            heard("no wait, send it later")                                  # a yes inside a no
+            assert (await send_text({"to": "Test", "message": "hi"})).startswith("STAGED") and not spawn.called
+            heard("yes, send it")                                            # the next words are a yes
+            proc = um.AsyncMock(); proc.returncode = 0; proc.communicate.return_value = (b"", b"")
+            spawn.return_value = proc
+            r4 = await send_text({"to": "Test", "message": "hi"})
+            assert r4.startswith("Passed to Messages") and spawn.called, r4
+            assert "--" in spawn.call_args.args
         with um.patch(__name__ + "._resolve", return_value=("-l JavaScript", "-l JavaScript")):
             assert (await send_text({"to": "x", "message": "hi"})).startswith("That doesn't look")
         assert _HANDLE.fullmatch("+1 (555) 123-4567") and _HANDLE.fullmatch("sam@example.com")

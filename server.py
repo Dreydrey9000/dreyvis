@@ -1651,6 +1651,8 @@ async def _handle_utterance(text: str) -> None:
             line = "One moment, sir — my language systems are still starting."
         await speech.say(line, Priority.NORMAL)
         return
+    # A staged text goes out only if THESE words, his next ones, are a yes.
+    messages_bridge.heard(text)
     utt = speech.begin_turn()
     try:
         try:
@@ -6168,12 +6170,27 @@ TOOL_HANDLERS["composio_execute"] = composio_bridge.execute
 # the turn has read outside text (an email it just fetched cannot tell it to reply).
 ACTING_TOOLS.add("composio_execute")
 
-# iMessage. Reading brings in other people's words; sending is staged by
-# messages_bridge and only goes out after Drey speaks again, and like every
-# acting tool it is refused on a turn that has read outside text.
-TOOL_HANDLERS["read_texts"] = messages_bridge.read_texts
+# iMessage. Reading brings in other people's words, so the result is wrapped
+# as untrusted and the turn is marked. Reading is also an acting tool: only on
+# a turn Drey drove and never after a page or file has been read, so somebody
+# else's text can't send him off to fetch his private messages. Sending is
+# staged by messages_bridge and goes out only when his next words are a yes.
+_TEXTS_WRAP_NAME = "text messages"
+
+
+async def _read_texts_tool(args: dict) -> str:
+    out = await messages_bridge.read_texts(args)
+    # Message lines start with "[when]"; anything else is JARVIS's own sentence.
+    return _wrap_untrusted(_TEXTS_WRAP_NAME, out) if out.startswith("[") else out
+
+
+TOOL_HANDLERS["read_texts"] = _read_texts_tool
 TOOL_HANDLERS["send_text"] = messages_bridge.send_text
-ACTING_TOOLS.add("send_text")
+ACTING_TOOLS.update({"read_texts", "send_text"})
+TAINT_EXEMPT_TOOLS["send_text"] = "it sends a text, it does not read"
+TAINT_EXEMPT_TOOLS["composio_search"] = (
+    "it lists app actions from Composio's own catalogue: names and schemas, "
+    "no email, page or message somebody else wrote")
 
 
 # --- "what are you connected to?" ----------------------------------------
@@ -6734,7 +6751,6 @@ async def voice_handler(ws: WebSocket):
                     log.info(f"User ({verdict}, ignored, {ago}): {text}")
                     continue
                 log.info(f"User: {text}")
-                messages_bridge.heard()       # send_text only sends after he has spoken again
                 if _is_fresh_start(text):
                     _spawn(_start_fresh())
                     continue
