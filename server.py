@@ -96,6 +96,11 @@ from speech import Priority, SpeechScheduler
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(name)s] %(message)s")
 log = logging.getLogger("jarvis")
 
+# `kill -USR1 <pid>` prints every thread's stack to the log: how to see what a
+# busy server is doing without root (py-spy cannot attach on macOS without it).
+import faulthandler as _faulthandler, signal as _signal
+_faulthandler.register(_signal.SIGUSR1, all_threads=True)
+
 # ---------------------------------------------------------------------------
 # Config
 # ---------------------------------------------------------------------------

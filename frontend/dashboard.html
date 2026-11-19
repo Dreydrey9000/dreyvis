@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="/src/dashboard/style.css" />
   </head>
   <body>
+    <a class="skip-link" href="#content">Skip to content</a>
     <!-- Masthead: identity, link state, and the day's readouts. -->
     <header class="shell-head">
       <div class="shell-head-top">
@@ -16,7 +17,7 @@
         </div>
         <div id="link-state" class="link-state tone-ok">
           <span class="dot dot--done tone-ok" aria-hidden="true"></span>
-          <span id="link-state-text">Link OK</span>
+          <span id="link-state-text">Connecting…</span>
         </div>
         <div id="stats" class="shell-stats"></div>
       </div>
@@ -46,7 +47,7 @@
       </nav>
     </header>
 
-    <main class="shell-main">
+    <main id="content" class="shell-main" tabindex="-1">
       <!-- ── RUNS ────────────────────────────────────────────────────────── -->
       <div id="runs-view" class="view">
         <!-- The answer in one sentence, before any table. -->

@@ -141,7 +141,7 @@ function mastheadEnsured(): Masthead | null {
   usagePill.hidden = true;
   const usageNote = el("span", "stat-zone-note");
   const usageHead = el("div", "stat-zone-head");
-  usageHead.append(el("span", "stat-zone-title", "Subscription"), usagePill, usageNote);
+  usageHead.append(el("span", "stat-zone-title", "Plan use"), usagePill, usageNote);
   const usageGauges = el("div", "usage-gauges");
   const limits = el("section", "stat-zone");
   limits.append(usageHead, usageGauges);
@@ -162,10 +162,11 @@ function mastheadEnsured(): Masthead | null {
     tokens: readout("Tokens", "0", { size: "sm" }),
   };
   const todayHead = el("div", "stat-zone-head");
-  todayHead.append(el("span", "stat-zone-title", "Today"), nowRoot, attn);
+  todayHead.append(el("span", "stat-zone-title", "Last 24 hours"), nowRoot, attn);
   const figures = el("div", "stat-figures");
-  figures.append(cells.runs.root, cells.ok.root, cells.bad.root, cells.tokens.root);
-  const today = el("section", "stat-zone");
+  // Tokens live on the Usage tab; the header keeps the counts an owner reads.
+  figures.append(cells.runs.root, cells.ok.root, cells.bad.root);
+  const today = el("section", "stat-zone stat-zone--today");
   today.append(todayHead, figures);
 
   host.replaceChildren(limits, today);
@@ -322,11 +323,13 @@ function runRow(run: RunRow, opts: { attn?: boolean } = {}): HTMLElement {
 
   r.root.dataset.runId = run.id;
   // A failure that was later redone is history, not an alarm.
-  if (FAILED.has(run.status) && !opts.attn && !stillNeedsYou(run, runs)) r.root.classList.add("row--dim");
+  // A failure that was later redone is history, not an alarm, and the row says so.
+  const redone = FAILED.has(run.status) && !opts.attn && !stillNeedsYou(run, runs);
+  if (redone) r.root.classList.add("row--dim");
   r.setLead(statusDot(run.status));
   r.setTitle(run.project_name);
   // A failed run says why, in plain words; the rest say what they were asked to do.
-  r.setSub(FAILED.has(run.status) ? plainError(run) : plainTask(run.prompt));
+  r.setSub(FAILED.has(run.status) ? plainError(run) + (redone ? ". Redone since." : "") : plainTask(run.prompt));
 
   const status = statusPill(run.status);
   status.classList.add("run-status");
@@ -346,7 +349,8 @@ function runRow(run: RunRow, opts: { attn?: boolean } = {}): HTMLElement {
 }
 
 /** Specs waiting for review, reported by specs.ts whenever it repaints. */
-let specsWaiting = 0;
+// null until specs.ts reports: an unknown must never read as "nothing needs you".
+let specsWaiting: number | null = null;
 document.addEventListener("dreyvis:specs-waiting", (e) => {
   specsWaiting = (e as CustomEvent<number>).detail;
   paint();
@@ -364,7 +368,8 @@ function runsSummary(all: RunRow[], needYou: number): string {
   if (today.length) parts.push(`Today: ${today.length - stopped} succeeded, ${stopped} failed${stopped && !needYou ? ", all redone since" : ""}.`);
   if (needYou) parts.push(`${plural(needYou, "build")} need${needYou === 1 ? "s" : ""} you: tap one to try again.`);
   if (specsWaiting) parts.push(`${plural(specsWaiting, "spec")} wait${specsWaiting === 1 ? "s" : ""} for your review in the Specs tab.`);
-  if (!needYou && !specsWaiting) parts.push("Nothing needs you.");
+  if (specsWaiting === null) parts.push("Checking whether any specs need your review…");
+  else if (!needYou && !specsWaiting) parts.push("Nothing needs you.");
   return parts.join(" ");
 }
 
@@ -522,6 +527,27 @@ function setupTabs(): void {
     specs: document.getElementById("specs-view"),
     usage: document.getElementById("usage-view"),
   };
+  // Real tabs for keyboard and screen readers: each names its panel, only the
+  // open one is a Tab stop, and the arrow keys (plus Home/End) move between them.
+  for (const t of tabs) {
+    const panel = views[t.dataset.view ?? ""];
+    if (panel) {
+      t.setAttribute("aria-controls", panel.id);
+      panel.setAttribute("role", "tabpanel");
+      panel.setAttribute("aria-labelledby", t.id);
+    }
+    t.tabIndex = t.classList.contains("active") ? 0 : -1;
+    t.addEventListener("keydown", (e) => {
+      const i = tabs.indexOf(t);
+      const next = e.key === "ArrowRight" ? (i + 1) % tabs.length
+        : e.key === "ArrowLeft" ? (i - 1 + tabs.length) % tabs.length
+        : e.key === "Home" ? 0 : e.key === "End" ? tabs.length - 1 : -1;
+      if (next < 0) return;
+      e.preventDefault();
+      tabs[next].focus();
+      tabs[next].click();
+    });
+  }
   for (const tab of tabs) {
     tab.addEventListener("click", () => {
       const view = tab.dataset.view ?? "runs";
@@ -529,6 +555,7 @@ function setupTabs(): void {
         const on = t === tab;
         t.classList.toggle("active", on);
         t.setAttribute("aria-selected", String(on));
+        t.tabIndex = on ? 0 : -1;
       }
       for (const [key, target] of Object.entries(views)) {
         if (target) target.hidden = key !== view;

@@ -11,6 +11,6 @@
 - References: Netflix and App Store shelves for the rows. Linear integrations and macOS glass for the cards.
 - Existing content/functionality to preserve: adding and reconnecting Composio apps with their waiting state. Also search over every app, the custom connector form with remove, and the restart-brain prompt.
 - Verification plan: phone (375) and desktop widths, keyboard through every row, reduced motion, both inspectors and the cognitive-load check.
-- Remaining unknowns: whether Ethan's dashboard should get the same look (not part of this change).
+- The dashboard now shares the orb look too (2026-11-19), as a layer in frontend/src/dashboard/theme/orb.css over its original theme.
 
 Approval applies to this project, not automatically to future websites.

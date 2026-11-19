@@ -1,5 +1,15 @@
 # Changelog
 
+## [2026-11-19]
+### Changed
+- Dashboard header and tabs in the orb look: a plain "Dashboard" title, sentence case, no scan lines, grid, corner brackets or numbered tabs. "Plan use" replaces "Subscription", the header counts say "Last 24 hours" because that is what they count, and phones hide them since the summary sentence covers it.
+
+### Fixed
+- Texts are wrapped as outside text, one line per message, and reading them is refused on a turn that already read a page or file. A staged text sends only when Drey's very next words are a yes (a "no, wait" or an unrelated question no longer releases it).
+
+### Added
+- `kill -USR1 <pid>` prints every thread's stack to the server log, to see what a busy server is doing without admin rights.
+
 ## [2026-11-18] (evening)
 ### Added
 - Texts: Dreyvis reads your iMessages and sends one only after reading it back and hearing a yes on a later turn. The two-step rule lives in messages_bridge.py, not in the prompt, so a text it read can't send one.

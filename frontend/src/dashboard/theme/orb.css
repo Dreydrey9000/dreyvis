@@ -1,0 +1,176 @@
+/* ===========================================================================
+   ORB LOOK — loaded last, so it wins over tokens/shell/primitives.
+   Same material as the orb and the Connectors page: #050508, one sky blue,
+   the system font, sentence case. No grid, no scan lines, no tiny spaced
+   capitals in the header: an owner should read it, not decode it.
+   =========================================================================== */
+
+:root {
+  --ground:       #050508;
+  --ground-lift:  #08090e;
+  --accent:       rgb(14, 165, 233);
+  --accent-bright: #7dd3fc;
+  --surface:        rgba(14, 165, 233, 0.04);
+  --surface-raised: rgba(14, 165, 233, 0.07);
+  --edge:         rgba(14, 165, 233, 0.16);
+  --edge-strong:  rgba(14, 165, 233, 0.32);
+  --edge-hot:     rgba(14, 165, 233, 0.55);
+  --text:         #e6f1fa;
+  --text-dim:     #93acc0;
+  --text-faint:   #6f8798;
+  --scrim:        rgba(5, 5, 8, 0.94);
+  --scrim-soft:   rgba(5, 5, 8, 0.64);
+  --glow-text:    none;
+}
+.tone-accent { --tone-soft: rgba(14, 165, 233, 0.14); }
+
+/* One soft light at the top, like the orb's glow. */
+body::before {
+  background: radial-gradient(60% 50% at 50% -10%, rgba(14, 165, 233, 0.14), transparent 70%);
+}
+body::after { display: none; }
+
+/* ── Header ──────────────────────────────────────────────────────────────── */
+.shell-head {
+  background: rgba(5, 5, 8, 0.9);
+  backdrop-filter: blur(12px);
+}
+.shell-head-top {
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 16px 32px;
+  padding: 24px 24px 16px;
+}
+.brand { flex-direction: column; align-items: flex-start; gap: 4px; }
+.brand-mark {
+  font-size: 16px;
+  font-weight: 400;
+  letter-spacing: 4px;
+  color: rgba(14, 165, 233, 0.8);
+  text-shadow: none;
+}
+.brand-sub {
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--text);
+}
+.link-state, .stat-now, .stat-zone-title, .stat-zone-note, .usage-when,
+.bar-label, .bar-value, .readout-label, .shell-head .pill {
+  font-size: 16px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.link-state { align-self: flex-end; gap: 8px; }
+.stat-zone-title { color: var(--text-dim); }
+.stat-zone-note, .usage-when, .bar-label, .readout-label { color: var(--text-faint); }
+.bar-value { color: var(--text); }
+.readout--sm .readout-value { font-size: 20px; font-weight: 600; }
+.shell-head .pill { padding: 0 8px; border-radius: 999px; }
+.stat-figures { gap: 24px; }
+.usage-gauges { flex-wrap: wrap; gap: 24px; }
+.usage-gauge { width: 240px; }
+.bar-track { height: 8px; border-radius: 999px; border: 0; background: rgba(14, 165, 233, 0.1); }
+.bar-track::after { display: none; }
+.bar-fill { border-radius: 999px; box-shadow: none; }
+
+/* ── Tabs: plain words, no numbers, a sky underline on the open one. ────── */
+.shell-tabs { padding: 0 24px; }
+.tab {
+  font-size: 16px;
+  letter-spacing: 0;
+  text-transform: none;
+  min-height: 48px;
+}
+.tab::before { content: none; }
+.tab.active { color: var(--text); }
+.tab.active::after { box-shadow: none; }
+.tab-badge { font-size: 16px; }
+
+/* ── Panels: rounded like the Connectors cards, no corner brackets. ─────── */
+.panel, .row { border-radius: 16px; }
+.brackets::before, .brackets::after, .panel::before, .panel-head::after { display: none; }
+.panel { box-shadow: none; }
+.panel-head { padding: 16px 24px; }
+.panel-title {
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--text);
+}
+.status-pill, .row .pill { letter-spacing: 0; text-transform: none; border-radius: 999px; }
+
+@media (max-width: 720px) {
+  .shell-head-top { padding: 16px 16px 12px; align-items: flex-start; }
+  .shell-stats, .stat-zone, .usage-gauges { width: 100%; }
+  /* Phones: the Runs summary already says this, so the header keeps only plan use. */
+  .stat-zone--today { display: none; }
+  .usage-gauge { width: 100%; flex: 1 1 100%; }
+  .shell-tabs { padding: 0 16px; }
+}
+
+/* ── Round 2 from the inspectors ─────────────────────────────────────────── */
+/* One left edge: title, tab labels, summary and cards all start at 24px. */
+.shell-main { padding-left: 24px; padding-right: 24px; }
+.shell-tabs { padding: 0 8px; }
+.link-state { color: var(--text-dim); }
+/* Specs waiting is a to-do, not an alarm: sky, not red. */
+.tab-badge { --tone: var(--accent); color: #03111c; }
+.panel-meta { font-size: 16px; color: var(--text-dim); }
+/* Runs: status shown once (stripe + word), rows flat inside their panel. */
+#history-list .row-lead, #active-list .row-lead, #attention-list .row-lead { display: none; }
+.panel .row { border-radius: 12px; overflow: hidden; border-color: transparent; background: rgba(14, 165, 233, 0.03); }
+.run-tokens { display: none; }
+.status-pill, .row .pill { font-size: 16px; padding: 0 12px; }
+@media (max-width: 720px) {
+  .shell-main { padding-left: 16px; padding-right: 16px; }
+  .shell-tabs { padding: 0; border-bottom: 1px solid var(--edge); }
+  .shell-tabs .tab { border-bottom: 0; }
+  /* A gauge with no reading yet is noise on a small screen. */
+  .usage-gauge:has(.bar--unknown) { display: none; }
+}
+.bar--unknown .bar-value { font-style: normal; }
+
+/* ── Round 2 from the UX inspector ───────────────────────────────────────── */
+/* Nothing jumps while readings and badges arrive: room is held for both. */
+.shell-stats { min-height: 112px; }
+.tab-badge[hidden] { display: inline-flex; visibility: hidden; }
+.tab-badge { min-width: 32px; justify-content: center; }
+.shell-tabs .tab { min-height: 48px; }
+.tab:not(.active):hover { color: var(--text); }
+.tab:not(.active):hover::after { display: none; }
+.tab:focus-visible, .row--action:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.pane-title { white-space: normal; overflow-wrap: anywhere; }
+.skip-link { position: absolute; left: 16px; top: -64px; z-index: 50; padding: 12px 16px; border-radius: 999px;
+  background: var(--accent); color: #03111c; font-weight: 600; text-decoration: none; }
+.skip-link:focus { top: 16px; }
+@media (max-width: 720px) { .shell-stats { min-height: 120px; } }
+#content:focus { outline: none; }
+/* Run rows lost their status dot (the stripe and the word already say it), so
+   their grid loses that column too. */
+:is(#history-list, #active-list, #attention-list) .row { grid-template-columns: minmax(0, 1fr) minmax(0, auto); }
+@media (max-width: 640px) {
+  :is(#history-list, #active-list, #attention-list) .row { grid-template-columns: minmax(0, 1fr); }
+  :is(#history-list, #active-list, #attention-list) .row-trail { grid-column: 1 / -1; }
+}
+/* Row text at the same 16px as the status word, so nothing outshouts the project name. */
+.row-title, .row-sub, .row-meta { font-size: 16px; letter-spacing: 0; }
+.row-title { font-weight: 600; }
+.status-pill, .row .pill { font-weight: 500; padding: 0 8px; }
+/* One inner edge: card title and row text line up (16px body + 16px row). */
+.panel-head { padding-left: 32px; }
+.panel .row { padding-left: 16px; }
+@media (max-width: 640px) {
+  .panel > .panel-body { padding: 8px; }
+  .panel-head { padding-left: 24px; }
+  .panel .row { padding-left: 16px; }
+}
+
+/* Round 3: badge room held at its loaded width, hover without an underline,
+   a real ring on the skip link, and a phone header that scrolls away. */
+.tab-badge { min-width: 44px; }
+.tab:not(.active):hover { border-bottom-color: var(--edge); }
+.skip-link:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+@media (max-width: 720px) { .shell-head { position: static; } }

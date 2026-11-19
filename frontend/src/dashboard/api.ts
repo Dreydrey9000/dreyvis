@@ -456,9 +456,14 @@ export interface SpecDocument {
   sections: SpecSection[];
 }
 
-export async function listSpecs(): Promise<SpecProject[]> {
-  const body = await get<{ projects: SpecProject[] }>("/api/specs");
-  return body.projects;
+// One request in flight at a time: the scan is slow, and two callers at load
+// (badge + tab) used to pay for it twice.
+let specsInFlight: Promise<SpecProject[]> | null = null;
+export function listSpecs(): Promise<SpecProject[]> {
+  specsInFlight ??= get<{ projects: SpecProject[] }>("/api/specs")
+    .then((body) => body.projects)
+    .finally(() => { specsInFlight = null; });
+  return specsInFlight;
 }
 
 /**

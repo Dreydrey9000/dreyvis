@@ -56,7 +56,13 @@ function bindAction(btn: HTMLButtonElement, run: RunRow): void {
     btn.textContent = "Cancel";
     setTone(btn, "bad");
     actionHandler = () => void cancelRun(run.id);
+  } else if (run.status === "succeeded") {
+    // Nothing to redo on a run that worked; a button here would start a whole new build.
+    btn.hidden = true;
+    actionHandler = null;
+    return;
   } else {
+    btn.hidden = false;
     btn.textContent = "Try again";
     setTone(btn, "accent");
     actionHandler = () => void retryRun(run.id);
@@ -228,6 +234,8 @@ export async function openDetail(runId: string): Promise<void> {
   const close = button("Close", closeDetail, { quiet: true });
   close.classList.add("pane-close");
   head.append(dotSlot, el("h2", "pane-title", run.project_name), statusSlot, close);
+  host.setAttribute("aria-label", `Run details: ${run.project_name}, ${run.status}`);
+  host.onkeydown = (e) => { if (e.key === "Escape") { e.preventDefault(); closeDetail(); } };
 
   const body = el("div", "pane-body");
 
