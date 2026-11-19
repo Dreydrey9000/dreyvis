@@ -96,6 +96,7 @@ function buildAppMenu() {
     { label: "View", submenu: [
       { label: "Orb", accelerator: "CmdOrCtrl+1", click: () => showPage("") },
       { label: "Dashboard", accelerator: "CmdOrCtrl+2", click: () => showPage("dashboard") },
+      { label: "Connectors", accelerator: "CmdOrCtrl+3", click: () => showPage("connectors") },
       { type: "separator" },
       { role: "reload" },
       { role: "togglefullscreen" },
@@ -153,7 +154,7 @@ app.whenReady().then(async () => {
   await systemPreferences.askForMediaAccess("microphone");
 
   buildAppMenu();
-  ipcMain.on("dreyvis:show", (_e, page) => showPage(page === "dashboard" ? "dashboard" : ""));
+  ipcMain.on("dreyvis:show", (_e, page) => showPage(["dashboard", "connectors"].includes(page) ? page : ""));
   const icon = path.join(__dirname, "trayTemplate.png");
   tray = new Tray(fs.existsSync(icon) ? nativeImage.createFromPath(icon) : nativeImage.createEmpty());
   serverOn = await isServerUp();

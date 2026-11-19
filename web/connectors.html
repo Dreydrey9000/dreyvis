@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dreyvis Connectors</title>
+<style>
+  :root {
+    --bg: #060b14; --panel: #0d1626; --line: #1f3352; --text: #e6efff; --dim: #8fa6c8;
+    --accent: #5aa0ff; --ok: #4cd08a; --warn: #f2b84b; --bad: #ff7a7a;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+    font: 400 16px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+  main { max-width: 1040px; margin: 0 auto; padding: 64px 24px 96px; }
+  h1 { font-size: 32px; font-weight: 600; margin: 0 0 8px; }
+  h2 { font-size: 20px; font-weight: 600; margin: 48px 0 16px; }
+  p.lead { color: var(--dim); margin: 0; max-width: 64ch; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(232px, 1fr)); gap: 12px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px;
+    display: flex; flex-direction: column; gap: 8px; min-height: 128px; }
+  .card .name { font-weight: 600; }
+  .card .about { color: var(--dim); flex: 1; }
+  .row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .badge { font-size: 16px; color: var(--dim); }
+  .badge.connected { color: var(--ok); } .badge.expired { color: var(--warn); }
+  button { font: inherit; font-weight: 600; color: var(--text); background: transparent;
+    border: 1px solid var(--line); border-radius: 8px; padding: 0 16px; min-height: 40px; cursor: pointer; }
+  button:hover { border-color: var(--accent); }
+  button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  button:disabled { opacity: .5; cursor: default; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #04101f; }
+  input { font: inherit; color: var(--text); background: #08111f; border: 1px solid var(--line);
+    border-radius: 8px; padding: 0 12px; min-height: 44px; width: 100%; }
+  label { display: block; font-weight: 600; margin-bottom: 4px; }
+  .hint { color: var(--dim); font-size: 16px; margin-top: 4px; }
+  .form { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 24px;
+    display: grid; gap: 16px; max-width: 640px; }
+  .msg { min-height: 24px; }
+  .msg.err { color: var(--bad); } .msg.ok { color: var(--ok); }
+  .list { display: grid; gap: 8px; }
+  .item { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px; }
+  .empty { color: var(--dim); }
+  #search { max-width: 480px; margin-bottom: 16px; }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  @media (max-width: 600px) { main { padding: 64px 16px; } h1 { font-size: 24px; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Connectors</h1>
+  <p class="lead">Connect an app once and Dreyvis can use it when you ask. Anything that sends or changes something still waits for your spoken yes.</p>
+  <p id="load" class="msg" role="status">Loading your connectors…</p>
+
+  <h2>Connected</h2>
+  <div id="mine" class="list"></div>
+
+  <h2>Recommended</h2>
+  <div id="rec" class="grid"></div>
+
+  <h2>All apps</h2>
+  <label for="search" class="sr">Search all apps</label>
+  <input id="search" type="search" placeholder="Search 1,000 apps, like Mailchimp or HighLevel" autocomplete="off">
+  <div id="all" class="grid"></div>
+
+  <h2>Custom connector</h2>
+  <form id="custom" class="form">
+    <p class="hint" style="margin:0">Any MCP server with a web address. Use this for tools Composio doesn't have, like your own 1BB or a company's MCP link.</p>
+    <div><label for="c-name">Name</label><input id="c-name" required maxlength="64" placeholder="my-crm"></div>
+    <div><label for="c-url">Address</label><input id="c-url" required type="url" placeholder="https://example.com/mcp">
+      <div class="hint">Starts with https://.</div></div>
+    <div><label for="c-key">Key (optional)</label><input id="c-key" type="password" autocomplete="off" placeholder="Paste it if the service gave you one">
+      <div class="hint">Saved only on this Mac, never shown again.</div></div>
+    <div class="row"><button class="primary" type="submit">Add connector</button><span id="c-msg" class="msg" role="status"></span></div>
+  </form>
+</main>
+<script>
+const $ = (id) => document.getElementById(id);
+let data = { recommended: [], all: [], custom: [] };
+const waiting = new Set();          // apps whose sign-in page is open
+
+function el(tag, cls, text) { const n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; }
+
+function badge(status, slug) {
+  if ((waiting.has(slug) || status === "waiting") && status !== "connected") return el("span", "badge", "Waiting for your approval");
+  if (status === "connected") return el("span", "badge connected", "Connected");
+  if (status === "expired") return el("span", "badge expired", "Sign-in expired");
+  return el("span", "badge", "");
+}
+
+function appCard(a) {
+  const c = el("div", "card");
+  c.append(el("div", "name", a.name), el("div", "about", a.about || ""));
+  const row = el("div", "row");
+  row.append(badge(a.status, a.slug));
+  if (a.status !== "connected") {
+    const b = el("button", "", a.status === "expired" ? "Reconnect" : a.status === "waiting" ? "Open sign-in" : "Add");
+    b.type = "button";
+    b.setAttribute("aria-label", `${b.textContent} ${a.name}`);
+    b.onclick = () => addApp(a, b);
+    row.append(b);
+  }
+  c.append(row);
+  return c;
+}
+
+async function addApp(a, btn) {
+  btn.disabled = true; btn.textContent = "Opening…";
+  try {
+    const r = await fetch("/api/connectors/link", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ slug: a.slug }) });
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.error || "Could not start the sign-in.");
+    window.open(j.url, "_blank");
+    waiting.add(a.slug); render(); poll(a.slug, Date.now());
+  } catch (e) { btn.disabled = false; btn.textContent = "Try again"; $("load").textContent = e.message; $("load").className = "msg err"; }
+}
+
+async function poll(slug, started) {
+  await new Promise((r) => setTimeout(r, 4000));
+  await load(true);
+  const hit = [...data.recommended, ...data.all].find((a) => a.slug === slug);
+  if (hit && hit.status === "connected") { waiting.delete(slug); render(); return; }
+  if (Date.now() - started < 5 * 60 * 1000) poll(slug, started);
+  else { waiting.delete(slug); render(); }
+}
+
+function render() {
+  const all = [...data.recommended, ...data.all];
+  const mine = $("mine"); mine.replaceChildren();
+  const connected = all.filter((a) => a.status === "connected");
+  for (const a of connected) { const i = el("div", "item row"); i.append(el("span", "name", a.name), el("span", "badge connected", "Connected")); mine.append(i); }
+  for (const c of data.custom) {
+    const i = el("div", "item row");
+    const left = el("div"); left.append(el("div", "name", `${c.name} (custom)`), el("div", "hint", c.where + (c.has_key ? " · key saved" : "")));
+    const rm = el("button", "", "Remove"); rm.type = "button"; rm.setAttribute("aria-label", `Remove ${c.name}`);
+    rm.onclick = () => removeCustom(c.name, rm);
+    i.append(left, rm); mine.append(i);
+  }
+  if (!mine.children.length) mine.append(el("p", "empty", "Nothing connected yet."));
+  $("rec").replaceChildren(...data.recommended.map(appCard));
+  renderSearch();
+}
+
+function renderSearch() {
+  const q = $("search").value.trim().toLowerCase();
+  const box = $("all");
+  if (!q) { box.replaceChildren(el("p", "empty", `Type to search ${data.all.length.toLocaleString()} more apps.`)); return; }
+  const hits = data.all.filter((a) => a.name.toLowerCase().includes(q) || a.slug.includes(q) || (a.about || "").toLowerCase().includes(q)).slice(0, 30);
+  box.replaceChildren(...(hits.length ? hits.map(appCard) : [el("p", "empty", "No app matches that. Try a custom connector below.")]));
+}
+
+async function removeCustom(name, btn) {
+  if (!confirm(`Remove the ${name} connector? Dreyvis will stop using it.`)) return;
+  btn.disabled = true;
+  const r = await fetch("/api/connectors/custom/remove", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name }) });
+  const j = await r.json();
+  if (!r.ok) { btn.disabled = false; alert(j.error); return; }
+  await load();
+}
+
+$("custom").onsubmit = async (e) => {
+  e.preventDefault();
+  const msg = $("c-msg"), btn = e.submitter;
+  btn.disabled = true; msg.className = "msg"; msg.textContent = "Adding and restarting Dreyvis's brain…";
+  try {
+    const r = await fetch("/api/connectors/custom", { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: $("c-name").value, url: $("c-url").value, key: $("c-key").value }) });
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.error);
+    $("c-key").value = ""; $("custom").reset();
+    msg.className = "msg ok"; msg.textContent = j.reloaded ? "Added. Dreyvis can use it now." : "Saved. Dreyvis picks it up next time it starts.";
+    await load();
+  } catch (err) { msg.className = "msg err"; msg.textContent = err.message; }
+  btn.disabled = false;
+};
+
+$("search").oninput = renderSearch;
+
+async function load(fresh) {
+  try {
+    const r = await fetch("/api/connectors" + (fresh ? "?fresh=1" : ""));
+    if (!r.ok) throw new Error("Dreyvis didn't answer (" + r.status + ").");
+    data = await r.json();
+    $("load").textContent = ""; $("load").className = "msg";
+    render();
+  } catch (e) { $("load").textContent = e.message + " Is Dreyvis turned on?"; $("load").className = "msg err"; }
+}
+load();
+</script>
+</body>
+</html>

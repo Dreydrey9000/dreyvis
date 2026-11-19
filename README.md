@@ -62,6 +62,14 @@ To run the server in the background and start it at login, copy `docs/com.drey.d
 | **Option+Space** | Mute or unmute the mic, for when music is playing |
 | Say "ask Grok…" | Get Grok's answer, read out by Dreyvis |
 | Open the dashboard from the menu | See every run, session and how much of your plan is used |
+| **Cmd+3**, or the Connectors button | Add apps and custom connectors |
+
+## Connectors
+
+Press Cmd+3. Two ways to connect:
+
+- **Apps.** About 40 recommended apps up top, and a search box for all 1,000 Composio apps. Press **Add**, approve in your browser, and the card turns green on its own.
+- **Custom connectors.** Any MCP server with a web address, plus a key if the service gives you one. Dreyvis stores the key in `data/jarvis/connections.json`, which only your Mac user can open, and never displays it again. Saving one restarts Dreyvis's brain to load the new tools. Builds keep running.
 
 ## Costs
 

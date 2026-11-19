@@ -88,6 +88,7 @@ import tts
 import ears
 import other_brains
 import composio_bridge
+import connectors
 from brain import Brain, BrainConfig, MAX_BOOT_PROJECTS
 from speech import Priority, SpeechScheduler
 
@@ -6950,6 +6951,63 @@ async def api_save_preferences(body: PreferencesUpdate):
     except ValueError as e:
         return JSONResponse({"success": False, "error": str(e)}, status_code=400)
     return {"success": True}
+
+# ---------------------------------------------------------------------------
+# Connectors page: Composio apps + custom MCP servers
+# ---------------------------------------------------------------------------
+
+async def _reload_connections() -> bool:
+    """Hand a changed connections.json to the brain. A fresh brain is the only
+    way it sees new MCP servers; rotate() keeps the old one if the new won't start.
+    Builds run in their own processes, so they are untouched."""
+    if brain_instance is None or brain_instance.config.mcp_config is None:
+        return False
+    _write_mcp_config(brain_instance.config.mcp_config.parent)
+    brain_instance.config.connections = sorted(LAST_CONNECTIONS.servers)
+    async with _rotation_lock:
+        return await brain_instance.rotate(handover=None)
+
+
+@app.get("/connectors")
+async def serve_connectors():
+    return FileResponse(str(Path(__file__).parent / "web" / "connectors.html"))
+
+
+@app.get("/api/connectors")
+async def api_connectors(fresh: bool = False):
+    status = await connectors.statuses(fresh)
+    apps = await connectors.catalog()
+    by_slug = {a["slug"]: a for a in apps}
+    recommended = [{**by_slug[s], "about": why, "status": status.get(s, "")}
+                   for s, why in connectors.RECOMMENDED if s in by_slug]
+    rec = {s for s, _ in connectors.RECOMMENDED}
+    others = [{**a, "status": status.get(a["slug"], "")} for a in apps if a["slug"] not in rec]
+    return {"recommended": recommended, "all": others, "custom": connectors.custom_list(),
+            "custom_problems": LAST_CONNECTIONS.problems}
+
+
+@app.post("/api/connectors/link")
+async def api_connectors_link(body: dict):
+    result = await connectors.link(str(body.get("slug", "")))
+    return JSONResponse(result, status_code=400 if "error" in result else 200)
+
+
+@app.post("/api/connectors/custom")
+async def api_connectors_custom_add(body: dict):
+    error = connectors.custom_add(str(body.get("name", "")), str(body.get("url", "")),
+                                  str(body.get("key", "")))
+    if error:
+        return JSONResponse({"error": error}, status_code=400)
+    return {"ok": True, "reloaded": await _reload_connections()}
+
+
+@app.post("/api/connectors/custom/remove")
+async def api_connectors_custom_remove(body: dict):
+    error = connectors.custom_remove(str(body.get("name", "")))
+    if error:
+        return JSONResponse({"error": error}, status_code=400)
+    return {"ok": True, "reloaded": await _reload_connections()}
+
 
 # ---------------------------------------------------------------------------
 # Control endpoints (restart)

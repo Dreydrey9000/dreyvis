@@ -183,21 +183,33 @@ class DreyvisSpeechRecognition {
 // specs, projects, usage), placed clear of the window's traffic-light buttons.
 window.addEventListener("DOMContentLoaded", () => {
   const onDashboard = location.pathname.startsWith("/dashboard");
-  const b = document.createElement("button");
-  b.type = "button";
-  b.textContent = onDashboard ? "Orb" : "Dashboard";
-  b.title = onDashboard ? "Back to the orb (Cmd+1)" : "Open the dashboard (Cmd+2)";
-  b.setAttribute("aria-label", b.title);
-  Object.assign(b.style, {
-    position: "fixed", zIndex: "2147483647", font: "500 14px -apple-system, BlinkMacSystemFont, sans-serif",
-    color: "#cfe0ff", background: "rgba(10,18,32,0.85)", border: "1px solid #1f3352", borderRadius: "8px",
-    padding: "0 16px", height: "36px", cursor: "pointer",
+  const onOrb = location.pathname === "/";
+  // The orb gets Dashboard + Connectors; every other page gets a way back to the orb.
+  const links = onOrb
+    ? [["Dashboard", "dashboard", "Open the dashboard (Cmd+2)"], ["Connectors", "connectors", "Connect apps (Cmd+3)"]]
+    : [["Orb", "", "Back to the orb (Cmd+1)"]];
+  const bar = document.createElement("div");
+  Object.assign(bar.style, {
+    position: "fixed", zIndex: "2147483647", display: "flex", gap: "8px",
     ...(onDashboard ? { right: "16px", bottom: "16px" } : { left: "88px", top: "16px" }),
   });
-  b.addEventListener("focus", () => { b.style.outline = "2px solid #5aa0ff"; b.style.outlineOffset = "2px"; });
-  b.addEventListener("blur", () => { b.style.outline = "none"; });
-  b.addEventListener("click", () => ipcRenderer.send("dreyvis:show", onDashboard ? "" : "dashboard"));
-  document.body.appendChild(b);
+  for (const [label, page, title] of links) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.textContent = label;
+    b.title = title;
+    b.setAttribute("aria-label", title);
+    Object.assign(b.style, {
+      font: "500 14px -apple-system, BlinkMacSystemFont, sans-serif",
+      color: "#cfe0ff", background: "rgba(10,18,32,0.85)", border: "1px solid #1f3352", borderRadius: "8px",
+      padding: "0 16px", height: "36px", cursor: "pointer",
+    });
+    b.addEventListener("focus", () => { b.style.outline = "2px solid #5aa0ff"; b.style.outlineOffset = "2px"; });
+    b.addEventListener("blur", () => { b.style.outline = "none"; });
+    b.addEventListener("click", () => ipcRenderer.send("dreyvis:show", page));
+    bar.appendChild(b);
+  }
+  document.body.appendChild(bar);
 });
 
 // Load Whisper now with a quiet half second, so the first real phrase isn't a 30 second wait.

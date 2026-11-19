@@ -10,6 +10,8 @@
 
 - Composio bridge (composio_search, composio_execute): Gmail and 1,000+ apps; execute is an acting tool and its results count as outside text.
 - 1BB connected through connections.json.
+- Connectors page (`/connectors`, Cmd+3, a button on the orb): 40 recommended apps plus search over all 1,000 Composio apps, with one-click sign-in links that update on their own. Built so adding an app no longer needs a terminal.
+- Custom connectors: add any remote MCP server by address and optional key. It's saved 0600 in connections.json, the key never goes back to the page, and the brain restarts on its own (builds are separate processes, so they keep running).
 - Dashboard opens inside the app: a button on the orb, Cmd+1 / Cmd+2, and the menu-bar item.
 - Animated orb GIF in the README.
 
