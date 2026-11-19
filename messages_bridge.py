@@ -27,6 +27,8 @@ HOME = Path.home()
 CHAT_DB = HOME / "Library/Messages/chat.db"
 APPLE_EPOCH = 978307200            # 2001-01-01 in Unix time
 MAX_TEXT = 1000
+# Who a text can go to: a phone number or an email, never something that starts with "-".
+_HANDLE = re.compile(r"\+?[0-9][0-9 ().\-]{5,19}|[^@\s\-][^@\s]*@[^@\s]+\.[^@\s]+")
 NO_ACCESS = ("I can't open your Messages yet, sir: macOS hasn't given me Full Disk "
              "Access. It's one switch in System Settings, under Privacy and Security.")
 
@@ -154,6 +156,8 @@ async def send_text(args: dict) -> str:
         handle, name = await asyncio.to_thread(_resolve, to)
         if handle is None:
             return name
+        if not _HANDLE.fullmatch(handle.strip()):
+            return "That doesn't look like a phone number or email, sir."
         _staged = {"to": to, "handle": handle, "name": name, "message": message, "at": _heard}
         return (f"STAGED, not sent. Read it back to Drey in one sentence: the text to {name} "
                 f"saying \"{message}\". Send it only by calling send_text again with the same "
@@ -166,7 +170,9 @@ async def send_text(args: dict) -> str:
               'set svc to 1st account whose service type = iMessage',
               'send (item 2 of argv) to participant (item 1 of argv) of svc',
               'end tell', 'end run']
-    cmd = ["osascript"] + sum([["-e", s] for s in script], []) + [handle, message]
+    # "--" ends osascript's own options: without it a text starting with "-"
+    # (say "-l ...") is read as a flag, not as words to send.
+    cmd = ["osascript"] + sum([["-e", s] for s in script], []) + ["--", handle, message]
     proc = await asyncio.create_subprocess_exec(*cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
     try:
         _out, err = await asyncio.wait_for(proc.communicate(), 30)
@@ -196,6 +202,10 @@ if __name__ == "__main__":
             heard()
             r3 = await send_text({"to": "Test", "message": "hello"})       # different words: re-stage
             assert r3.startswith("STAGED") and not spawn.called
+        with um.patch(__name__ + "._resolve", return_value=("-l JavaScript", "-l JavaScript")):
+            assert (await send_text({"to": "x", "message": "hi"})).startswith("That doesn't look")
+        assert _HANDLE.fullmatch("+1 (555) 123-4567") and _HANDLE.fullmatch("sam@example.com")
+        assert not _HANDLE.fullmatch("-e") and not _HANDLE.fullmatch("-x@y.com")
         assert _text_of(None, b"xxNSString\x01\x94\x84\x01+\x05hello rest") == "hello"
         print("messages self-check: ok")
     asyncio.run(check())
