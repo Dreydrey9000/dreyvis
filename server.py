@@ -6982,8 +6982,12 @@ async def api_connectors(fresh: bool = False):
                    for s, why in connectors.RECOMMENDED if s in by_slug]
     rec = {s for s, _ in connectors.RECOMMENDED}
     others = [{**a, "status": status.get(a["slug"], "")} for a in apps if a["slug"] not in rec]
+    # The brain only loads connectors when it starts; say when the file and
+    # the running brain disagree, so the page can offer a restart.
+    needs_restart = declared_connections().servers != LAST_CONNECTIONS.servers
     return {"recommended": recommended, "all": others, "custom": connectors.custom_list(),
-            "custom_problems": LAST_CONNECTIONS.problems}
+            "claude_code": connectors.claude_code_list(),
+            "custom_problems": LAST_CONNECTIONS.problems, "needs_restart": needs_restart}
 
 
 @app.post("/api/connectors/link")
@@ -6998,7 +7002,7 @@ async def api_connectors_custom_add(body: dict):
                                   str(body.get("key", "")))
     if error:
         return JSONResponse({"error": error}, status_code=400)
-    return {"ok": True, "reloaded": await _reload_connections()}
+    return {"ok": True, "needs_restart": True}
 
 
 @app.post("/api/connectors/custom/remove")
@@ -7006,7 +7010,21 @@ async def api_connectors_custom_remove(body: dict):
     error = connectors.custom_remove(str(body.get("name", "")))
     if error:
         return JSONResponse({"error": error}, status_code=400)
-    return {"ok": True, "reloaded": await _reload_connections()}
+    return {"ok": True, "needs_restart": True}
+
+
+@app.post("/api/connectors/import")
+async def api_connectors_import(body: dict):
+    error = connectors.import_from_claude_code(str(body.get("name", "")))
+    if error:
+        return JSONResponse({"error": error}, status_code=400)
+    return {"ok": True, "needs_restart": True}
+
+
+@app.post("/api/connectors/restart-brain")
+async def api_connectors_restart_brain():
+    """Only when Drey presses Restart: a fresh brain forgets the current chat."""
+    return {"ok": await _reload_connections()}
 
 
 # ---------------------------------------------------------------------------

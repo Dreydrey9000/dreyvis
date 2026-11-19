@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dreyvis Connectors: 6 looks</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600&family=Outfit:wght@400;600&family=Fredoka:wght@400;600&family=IBM+Plex+Mono:wght@400;600&family=Plus+Jakarta+Sans:wght@400;700&family=Sora:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root { --bg:#05080f; --text:#e8eefc; --dim:#93a3bf; --line:#1d2a42; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:400 16px/1.5 -apple-system, BlinkMacSystemFont, sans-serif; }
+  .wrap { max-width:1180px; margin:0 auto; padding:48px 24px 96px; }
+  h1 { font-size:40px; margin:0 0 8px; }
+  .intro { color:var(--dim); max-width:68ch; margin:0 0 48px; }
+  .opt { margin:0 0 96px; }
+  .opt h2 { font-size:32px; margin:0 0 4px; }
+  .opt .feel { color:var(--dim); margin:0 0 16px; max-width:70ch; }
+  .rec { display:inline-block; background:#5aa0ff; color:#04101f; font-weight:600; border-radius:999px; padding:0 12px; font-size:16px; margin-left:8px; vertical-align:middle; }
+  .specs { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:8px 24px; margin:16px 0 24px; color:var(--dim); }
+  .specs b { color:var(--text); font-weight:600; }
+  .stage { border-radius:20px; overflow:hidden; border:1px solid var(--line); position:relative; min-height:560px; }
+  .label { font-size:16px; color:var(--dim); margin-top:8px; }
+  a { color:#8cc1ff; }
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation:none !important; transition:none !important; } }
+
+  /* shared app chip colors (brand colours as plain fills, initials only, no logos) */
+  .c-gmail{--c:#ea4335} .c-cal{--c:#4285f4} .c-drive{--c:#0f9d58} .c-slack{--c:#611f69} .c-notion{--c:#e8e8e8} .c-stripe{--c:#635bff}
+  .c-github{--c:#8b949e} .c-yt{--c:#ff0000} .c-1bb{--c:#d4a53c} .c-utopia{--c:#22c3a6} .c-omi{--c:#ff8a3d} .c-zernio{--c:#00b4d8}
+
+  /* ── 1 ORBIT STATION ─────────────────────────────── */
+  .o1 { background: radial-gradient(1200px 600px at 50% 40%, #0d1f3d 0%, #050a14 60%); font-family:"Space Grotesk",sans-serif; padding:32px; }
+  .o1 .top { display:flex; justify-content:space-between; align-items:baseline; }
+  .o1 h3 { font-size:32px; margin:0; font-weight:600; }
+  .o1 .count { color:#7fb4ff; }
+  .o1 .sky { position:relative; height:360px; margin:16px auto 24px; max-width:640px; }
+  .o1 .core { position:absolute; left:50%; top:50%; width:96px; height:96px; margin:-48px; border-radius:50%;
+    background: radial-gradient(circle at 40% 35%, #cfe4ff, #3e8bff 45%, #0b2a66 75%, transparent 76%);
+    box-shadow:0 0 64px 16px rgba(62,139,255,.45); }
+  .o1 .ring { position:absolute; left:50%; top:50%; border:1px dashed rgba(127,180,255,.25); border-radius:50%; }
+  .o1 .r1 { width:220px; height:220px; margin:-110px; animation:spin 40s linear infinite; }
+  .o1 .r2 { width:340px; height:340px; margin:-170px; animation:spin 70s linear infinite reverse; }
+  .o1 .planet { position:absolute; width:48px; height:48px; border-radius:50%; display:grid; place-items:center; font-weight:600;
+    background:var(--c); color:#fff; box-shadow:0 0 24px var(--c); font-size:16px; }
+  .o1 .planet.off { background:#152238; color:#7f93b5; box-shadow:none; border:1px dashed #2c4268; }
+  .o1 .planet.wait { animation:pulse 2s ease-in-out infinite; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  @keyframes pulse { 50% { box-shadow:0 0 40px 8px var(--c); } }
+  .o1 .row { display:flex; gap:12px; flex-wrap:wrap; justify-content:center; }
+  .o1 .pill { border:1px solid #23406e; border-radius:999px; padding:8px 16px; background:rgba(12,26,52,.7); }
+  .o1 .pill b { font-weight:600; } .o1 .pill span { color:#7fb4ff; margin-left:8px; }
+  .o1 .btn { background:#3e8bff; color:#04101f; border-radius:999px; padding:8px 24px; font-weight:600; }
+
+  /* ── 2 HOME SCREEN ───────────────────────────────── */
+  .o2 { background: linear-gradient(160deg,#101935,#1b1240 60%,#0a1a2e); font-family:"Outfit",sans-serif; padding:32px; }
+  .o2 h3 { font-size:32px; margin:0 0 4px; font-weight:600; }
+  .o2 .sub { color:#a9b6d6; margin:0 0 24px; }
+  .o2 .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(104px,1fr)); gap:24px 16px; }
+  .o2 .app { text-align:center; }
+  .o2 .icon { width:72px; height:72px; margin:0 auto 8px; border-radius:20px; background:var(--c); display:grid; place-items:center;
+    font-size:24px; font-weight:600; color:#fff; position:relative; box-shadow:0 8px 24px rgba(0,0,0,.35); transition:transform .2s; }
+  .o2 .app:hover .icon { transform:translateY(-4px) rotate(-3deg); }
+  .o2 .c-notion .icon { color:#111; }
+  .o2 .dot { position:absolute; right:-4px; top:-4px; width:20px; height:20px; border-radius:50%; border:3px solid #141a3a; }
+  .o2 .on .dot { background:#3ddc84; } .o2 .wait .dot { background:#ffc83d; } .o2 .off .icon { filter:grayscale(1) brightness(.55); }
+  .o2 .add .icon { background:transparent; border:2px dashed #5c6c99; color:#a9b6d6; box-shadow:none; }
+  .o2 .name { font-size:16px; }
+  .o2 .folder { margin-top:32px; display:flex; gap:12px; flex-wrap:wrap; }
+  .o2 .chip { background:rgba(255,255,255,.08); border-radius:12px; padding:8px 16px; backdrop-filter:blur(8px); }
+
+  /* ── 3 AURORA GLASS ──────────────────────────────── */
+  .o3 { background:#040914; font-family:"Sora",sans-serif; padding:32px; overflow:hidden; }
+  .o3::before, .o3::after { content:""; position:absolute; border-radius:50%; filter:blur(80px); opacity:.7; animation:drift 14s ease-in-out infinite alternate; }
+  .o3::before { width:520px; height:420px; left:-80px; top:-120px; background:#1565ff; }
+  .o3::after { width:480px; height:400px; right:-120px; bottom:-140px; background:#00c2b8; animation-delay:-6s; }
+  @keyframes drift { to { transform:translate(60px,40px) scale(1.1); } }
+  .o3 > * { position:relative; z-index:1; }
+  .o3 h3 { font-size:32px; margin:0 0 24px; font-weight:600; }
+  .o3 .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:16px; }
+  .o3 .card { background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.18); border-radius:20px; padding:16px;
+    backdrop-filter:blur(20px) saturate(140%); -webkit-backdrop-filter:blur(20px) saturate(140%); }
+  .o3 .head { display:flex; align-items:center; gap:12px; margin-bottom:8px; }
+  .o3 .ic { width:40px; height:40px; border-radius:12px; background:var(--c); display:grid; place-items:center; font-weight:600; color:#fff; }
+  .o3 .c-notion .ic { color:#111; }
+  .o3 .about { color:#bcd0f0; margin:0 0 12px; }
+  .o3 .st { font-weight:600; } .o3 .st.on { color:#6dffc8; } .o3 .st.wait { color:#ffd76d; }
+  .o3 .ghost { border:1px solid rgba(255,255,255,.35); border-radius:12px; padding:4px 16px; float:right; }
+
+  /* ── 4 PATCH PANEL ───────────────────────────────── */
+  .o4 { background: #17181b repeating-linear-gradient(0deg, transparent 0 31px, rgba(255,255,255,.03) 31px 32px);
+    font-family:"IBM Plex Mono",monospace; padding:32px; color:#e9e4d8; }
+  .o4 h3 { font-size:32px; margin:0 0 4px; font-weight:600; letter-spacing:.02em; }
+  .o4 .sub { color:#a39c8c; margin:0 0 24px; }
+  .o4 .panel { display:grid; grid-template-columns:1fr 160px; gap:24px; align-items:center; }
+  .o4 .jacks { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; background:#222327; border-radius:12px; padding:24px;
+    box-shadow:inset 0 2px 0 rgba(255,255,255,.05), 0 12px 32px rgba(0,0,0,.5); }
+  .o4 .jack { text-align:center; }
+  .o4 .hole { width:48px; height:48px; margin:0 auto 8px; border-radius:50%; background:#0c0c0e; border:4px solid #3a3b40; position:relative; }
+  .o4 .on .hole::after { content:""; position:absolute; inset:8px; border-radius:50%; background:var(--c); box-shadow:0 0 16px var(--c); }
+  .o4 .wait .hole::after { content:""; position:absolute; inset:8px; border-radius:50%; background:#ffb000; animation:blink 1.2s steps(2) infinite; }
+  @keyframes blink { 50% { opacity:.2; } }
+  .o4 .lamp { width:8px; height:8px; border-radius:50%; display:inline-block; margin-right:8px; background:#3a3b40; }
+  .o4 .on .lamp { background:#7dff6a; box-shadow:0 0 8px #7dff6a; }
+  .o4 .core { height:160px; border-radius:12px; background:#0c1a33; border:4px solid #3a3b40; display:grid; place-items:center; text-align:center;
+    box-shadow:0 0 32px rgba(62,139,255,.35) inset; color:#9cc4ff; font-weight:600; }
+  .o4 .tape { margin-top:24px; display:inline-block; background:#f1e7c9; color:#1a1a1a; padding:4px 16px; transform:rotate(-1deg); font-weight:600; }
+
+  /* ── 5 DAYLIGHT BENTO (light) ───────────────────── */
+  .o5 { background:#eef1f6; color:#14213d; font-family:"Plus Jakarta Sans",sans-serif; padding:32px; }
+  .o5 h3 { font-size:32px; margin:0 0 24px; font-weight:700; }
+  .o5 .bento { display:grid; grid-template-columns:repeat(4,1fr); grid-auto-rows:120px; gap:16px; }
+  .o5 .t { background:#fff; border-radius:24px; padding:16px; box-shadow:0 1px 2px rgba(20,33,61,.06), 0 8px 24px rgba(20,33,61,.06); position:relative; overflow:hidden; }
+  .o5 .big { grid-column:span 2; grid-row:span 2; background:#14213d; color:#fff; }
+  .o5 .big .n { font-size:96px; font-weight:700; line-height:1; color:#7fb4ff; }
+  .o5 .wide { grid-column:span 2; }
+  .o5 .ic { width:40px; height:40px; border-radius:12px; background:var(--c); color:#fff; display:inline-grid; place-items:center; font-weight:700; }
+  .o5 .c-notion .ic { background:#111; }
+  .o5 .tag { display:inline-block; vertical-align:top; margin-left:8px; border-radius:999px; padding:0 12px; font-size:16px; font-weight:700; }
+  .o5 .on .tag { background:#dcfce7; color:#166534; } .o5 .wait .tag { background:#fef3c7; color:#92400e; }
+  .o5 .nm { margin-top:12px; font-weight:700; }
+  .o5 .add { border:2px dashed #b9c3d6; background:transparent; box-shadow:none; display:grid; place-items:center; color:#56627c; font-weight:700; }
+
+  /* ── 6 SHELVES ───────────────────────────────────── */
+  .o6 { background: linear-gradient(180deg,#081022,#050a14); font-family:"Fredoka",sans-serif; padding:32px 0 32px 32px; }
+  .o6 h3 { font-size:40px; margin:0 0 4px; font-weight:600; }
+  .o6 .sub { color:#9fb2d6; margin:0 0 24px; }
+  .o6 .shelf { margin-bottom:24px; }
+  .o6 .shelf h4 { margin:0 0 12px; font-size:20px; font-weight:600; }
+  .o6 .lane { display:flex; gap:16px; overflow:hidden; }
+  .o6 .tile { flex:0 0 200px; height:112px; border-radius:16px; padding:16px; color:#fff; position:relative;
+    background:linear-gradient(135deg, var(--c), color-mix(in srgb, var(--c) 40%, #050a14)); transition:transform .2s; }
+  .o6 .tile:hover { transform:scale(1.05); }
+  .o6 .c-notion.tile { color:#111; }
+  .o6 .tile b { font-size:20px; font-weight:600; }
+  .o6 .tile i { position:absolute; left:16px; bottom:12px; font-style:normal; font-size:16px; background:rgba(0,0,0,.35); border-radius:999px; padding:0 12px; }
+  .o6 .c-notion.tile i { background:rgba(0,0,0,.08); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Dreyvis Connectors: pick a look</h1>
+  <p class="intro">Six directions for the Connectors page, and the same look carries to the buttons you press from the orb. Every preview is real working CSS with your actual connectors in it (no logos, just each app's colour and initial). Moving parts hold still if your Mac has Reduce Motion on.</p>
+
+  <!-- 1 -->
+  <section class="opt">
+    <h2>1. Orbit Station <span class="rec">My pick</span></h2>
+    <p class="feel">Your apps orbit a little copy of the Dreyvis orb. Connected ones glow in their brand colour, waiting ones pulse, and apps you haven't added sit dim on the outer ring. It feels like Dreyvis's own world, not a settings screen.</p>
+    <div class="specs">
+      <div><b>Background:</b> deep navy with a soft blue spotlight</div>
+      <div><b>Surfaces:</b> glowing round "planets", pill buttons</div>
+      <div><b>Type:</b> Space Grotesk, rounded and techy</div>
+      <div><b>Layout:</b> orbit up top, add-and-search list below</div>
+      <div><b>Motion:</b> rings turn slowly, waiting apps pulse. Still with Reduce Motion</div>
+      <div><b>Why it fits:</b> it reuses the orb, so the app feels like one thing</div>
+      <div><b>Tradeoff:</b> past ~20 apps the orbit gets busy, so extras go in the list</div>
+      <div><b>Reference:</b> <a href="https://www.apple.com/apple-vision-pro/">Apple Vision Pro</a> glowing depth, plus your own orb</div>
+    </div>
+    <div class="stage o1">
+      <div class="top"><h3>Connectors</h3><span class="count">5 connected · 2 waiting</span></div>
+      <div class="sky">
+        <div class="ring r1"></div><div class="ring r2"></div><div class="core"></div>
+        <div class="planet c-gmail"  style="left:calc(50% - 24px);top:calc(50% - 134px)">G</div>
+        <div class="planet c-cal"    style="left:calc(50% + 78px);top:calc(50% - 78px)">C</div>
+        <div class="planet c-drive"  style="left:calc(50% + 86px);top:calc(50% + 32px)">D</div>
+        <div class="planet c-1bb"    style="left:calc(50% - 24px);top:calc(50% + 86px)">1</div>
+        <div class="planet c-utopia" style="left:calc(50% - 134px);top:calc(50% - 24px)">U</div>
+        <div class="planet c-slack wait" style="left:calc(50% + 136px);top:calc(50% - 150px)">S</div>
+        <div class="planet c-notion wait" style="left:calc(50% - 200px);top:calc(50% + 60px);color:#111">N</div>
+        <div class="planet off" style="left:calc(50% + 160px);top:calc(50% + 100px)">Gh</div>
+        <div class="planet off" style="left:calc(50% - 190px);top:calc(50% - 140px)">YT</div>
+      </div>
+      <div class="row">
+        <div class="pill"><b>Slack</b><span>waiting for you</span></div>
+        <div class="pill"><b>Notion</b><span>waiting for you</span></div>
+        <div class="pill"><b>+ 1,000 more apps</b></div>
+        <div class="btn">Add connector</div>
+      </div>
+    </div>
+    <div class="label">Rendered CSS. Rings and pulses are live.</div>
+  </section>
+
+  <!-- 2 -->
+  <section class="opt">
+    <h2>2. Home Screen</h2>
+    <p class="feel">Every connector is a big colourful app icon, like your iPhone home screen. A green dot means connected and yellow means it's waiting for you. Icons you haven't added are grey until you tap them.</p>
+    <div class="specs">
+      <div><b>Background:</b> blue-to-indigo gradient</div>
+      <div><b>Surfaces:</b> rounded app icons with soft shadows</div>
+      <div><b>Type:</b> Outfit, friendly and round</div>
+      <div><b>Layout:</b> icon grid with folders (Work, Social, Money)</div>
+      <div><b>Motion:</b> icons tilt up on hover. Still with Reduce Motion</div>
+      <div><b>Why it fits:</b> anyone gets it instantly, which helps when you show friends</div>
+      <div><b>Tradeoff:</b> less room to explain what each app does</div>
+      <div><b>Reference:</b> <a href="https://www.raycast.com/store">Raycast Store</a> icon grid, iOS home screen</div>
+    </div>
+    <div class="stage o2">
+      <h3>Connectors</h3><p class="sub">Tap an app to connect it.</p>
+      <div class="grid">
+        <div class="app on c-gmail"><div class="icon">G<span class="dot"></span></div><div class="name">Gmail</div></div>
+        <div class="app on c-cal"><div class="icon">C<span class="dot"></span></div><div class="name">Calendar</div></div>
+        <div class="app on c-drive"><div class="icon">D<span class="dot"></span></div><div class="name">Drive</div></div>
+        <div class="app wait c-slack"><div class="icon">S<span class="dot"></span></div><div class="name">Slack</div></div>
+        <div class="app wait c-notion"><div class="icon">N<span class="dot"></span></div><div class="name">Notion</div></div>
+        <div class="app on c-1bb"><div class="icon">1<span class="dot"></span></div><div class="name">1BB</div></div>
+        <div class="app on c-omi"><div class="icon">O<span class="dot"></span></div><div class="name">Omi</div></div>
+        <div class="app off c-stripe"><div class="icon">S</div><div class="name">Stripe</div></div>
+        <div class="app off c-github"><div class="icon">Gh</div><div class="name">GitHub</div></div>
+        <div class="app off c-yt"><div class="icon">YT</div><div class="name">YouTube</div></div>
+        <div class="app add"><div class="icon">+</div><div class="name">Custom</div></div>
+      </div>
+      <div class="folder"><span class="chip">Work · 6</span><span class="chip">Social · 7</span><span class="chip">Money · 3</span><span class="chip">From Claude Code · 41</span></div>
+    </div>
+    <div class="label">Rendered CSS. Hover an icon.</div>
+  </section>
+
+  <!-- 3 -->
+  <section class="opt">
+    <h2>3. Aurora Glass</h2>
+    <p class="feel">Frosted glass cards float over slow blue and teal northern lights. It's calm and premium, and each card still says in plain words what the app lets Dreyvis do.</p>
+    <div class="specs">
+      <div><b>Background:</b> near-black with drifting blue/teal light</div>
+      <div><b>Surfaces:</b> frosted glass with real blur</div>
+      <div><b>Type:</b> Sora, clean and modern</div>
+      <div><b>Layout:</b> card grid, status in colour words</div>
+      <div><b>Motion:</b> the light drifts slowly. Still with Reduce Motion</div>
+      <div><b>Why it fits:</b> keeps the useful descriptions and adds atmosphere</div>
+      <div><b>Tradeoff:</b> the closest to what you have now, just prettier</div>
+      <div><b>Reference:</b> <a href="https://linear.app/integrations">Linear integrations</a> card layout, macOS glass</div>
+    </div>
+    <div class="stage o3">
+      <h3>Connectors</h3>
+      <div class="grid">
+        <div class="card c-gmail"><div class="head"><span class="ic">G</span><b>Gmail</b></div><p class="about">Read, sort and draft email</p><span class="st on">Connected</span></div>
+        <div class="card c-slack"><div class="head"><span class="ic">S</span><b>Slack</b></div><p class="about">Read channels, send messages</p><span class="st wait">Waiting for you</span><span class="ghost">Open</span></div>
+        <div class="card c-notion"><div class="head"><span class="ic">N</span><b>Notion</b></div><p class="about">Pages, notes and databases</p><span class="st wait">Waiting for you</span><span class="ghost">Open</span></div>
+        <div class="card c-utopia"><div class="head"><span class="ic">U</span><b>Utopia</b></div><p class="about">Your personal context archive</p><span class="st on">Connected</span></div>
+        <div class="card c-stripe"><div class="head"><span class="ic">S</span><b>Stripe</b></div><p class="about">Payments and invoices</p><span class="st">Not added</span><span class="ghost">Add</span></div>
+        <div class="card c-github"><div class="head"><span class="ic">Gh</span><b>GitHub</b></div><p class="about">Repos and issues</p><span class="st">Not added</span><span class="ghost">Add</span></div>
+      </div>
+    </div>
+    <div class="label">Rendered CSS. The blur and light drift are real.</div>
+  </section>
+
+  <!-- 4 -->
+  <section class="opt">
+    <h2>4. Patch Panel</h2>
+    <p class="feel">An old studio switchboard. Each app is a jack, and connecting one lights it up in that app's colour. Jacks waiting on you blink amber. It's physical and playful, like gear in a recording studio.</p>
+    <div class="specs">
+      <div><b>Background:</b> graphite with faint rack lines</div>
+      <div><b>Surfaces:</b> metal panel, sunken jacks, masking-tape labels</div>
+      <div><b>Type:</b> IBM Plex Mono, studio-gear feel</div>
+      <div><b>Layout:</b> jack grid wired to a Dreyvis box</div>
+      <div><b>Motion:</b> waiting jacks blink. Still with Reduce Motion</div>
+      <div><b>Why it fits:</b> "plugging Dreyvis into things" is literally what this page does</div>
+      <div><b>Tradeoff:</b> most stylised, and the mono font reads a bit techy</div>
+      <div><b>Reference:</b> <a href="https://teenage.engineering/products/op-1">Teenage Engineering OP-1</a> hardware playfulness</div>
+    </div>
+    <div class="stage o4">
+      <h3>CONNECTORS</h3><p class="sub">Plug an app into Dreyvis.</p>
+      <div class="panel">
+        <div class="jacks">
+          <div class="jack on c-gmail"><div class="hole"></div><span class="lamp"></span>GMAIL</div>
+          <div class="jack on c-cal"><div class="hole"></div><span class="lamp"></span>CAL</div>
+          <div class="jack on c-drive"><div class="hole"></div><span class="lamp"></span>DRIVE</div>
+          <div class="jack on c-1bb"><div class="hole"></div><span class="lamp"></span>1BB</div>
+          <div class="jack wait c-slack"><div class="hole"></div><span class="lamp"></span>SLACK</div>
+          <div class="jack wait c-notion"><div class="hole"></div><span class="lamp"></span>NOTION</div>
+          <div class="jack c-stripe"><div class="hole"></div><span class="lamp"></span>STRIPE</div>
+          <div class="jack c-github"><div class="hole"></div><span class="lamp"></span>GITHUB</div>
+        </div>
+        <div class="core">DREYVIS<br>4 IN</div>
+      </div>
+      <span class="tape">+ PATCH IN A CUSTOM ONE</span>
+    </div>
+    <div class="label">Rendered CSS. Amber jacks blink.</div>
+  </section>
+
+  <!-- 5 -->
+  <section class="opt">
+    <h2>5. Daylight Bento</h2>
+    <p class="feel">A bright, clean light version. A big tile shows how many apps are connected, and the rest sit in friendly white tiles with coloured tags. This is the only light option, for when the dark look feels heavy.</p>
+    <div class="specs">
+      <div><b>Background:</b> soft cool grey</div>
+      <div><b>Surfaces:</b> white rounded tiles, gentle shadow</div>
+      <div><b>Type:</b> Plus Jakarta Sans, bold and friendly</div>
+      <div><b>Layout:</b> bento grid with one hero number tile</div>
+      <div><b>Motion:</b> the count rolls up when it changes. Still with Reduce Motion</div>
+      <div><b>Why it fits:</b> easiest to read in daylight and on a phone</div>
+      <div><b>Tradeoff:</b> breaks from the dark orb, so the app feels like two styles</div>
+      <div><b>Reference:</b> <a href="https://vercel.com/integrations">Vercel integrations</a> clarity, Apple bento grids</div>
+    </div>
+    <div class="stage o5">
+      <h3>Connectors</h3>
+      <div class="bento">
+        <div class="t big"><div>Connected</div><div class="n">5</div><div>Gmail, Calendar, Drive, 1BB, Utopia</div></div>
+        <div class="t wait c-slack"><span class="ic">S</span><span class="tag">Waiting</span><div class="nm">Slack</div></div>
+        <div class="t wait c-notion"><span class="ic">N</span><span class="tag">Waiting</span><div class="nm">Notion</div></div>
+        <div class="t on c-omi"><span class="ic">O</span><span class="tag">On</span><div class="nm">Omi memory</div></div>
+        <div class="t on c-zernio"><span class="ic">Z</span><span class="tag">On</span><div class="nm">Zernio</div></div>
+        <div class="t wide add">+ Add an app or a custom connector</div>
+      </div>
+    </div>
+    <div class="label">Rendered CSS. Light theme.</div>
+  </section>
+
+  <!-- 6 -->
+  <section class="opt">
+    <h2>6. Shelves</h2>
+    <p class="feel">Laid out like a streaming app: rows you scroll sideways, called "Connected", "Waiting for you", "Popular" and "From Claude Code". Big colourful tiles grow when you hover. It's fun to browse when you're looking for something new to add.</p>
+    <div class="specs">
+      <div><b>Background:</b> deep navy fade</div>
+      <div><b>Surfaces:</b> big gradient tiles in each app's colour</div>
+      <div><b>Type:</b> Fredoka, playful and rounded</div>
+      <div><b>Layout:</b> horizontal rows by group</div>
+      <div><b>Motion:</b> tiles grow on hover, rows slide. Still with Reduce Motion</div>
+      <div><b>Why it fits:</b> 1,000 apps feel like a catalogue to explore, not a list</div>
+      <div><b>Tradeoff:</b> side-scrolling rows are harder with a keyboard</div>
+      <div><b>Reference:</b> <a href="https://www.netflix.com">Netflix</a> rows, <a href="https://www.apple.com/app-store/">App Store</a> Today shelves</div>
+    </div>
+    <div class="stage o6">
+      <h3>Connectors</h3><p class="sub">5 connected. 2 waiting on you.</p>
+      <div class="shelf"><h4>Waiting for you</h4><div class="lane">
+        <div class="tile c-slack"><b>Slack</b><i>Tap to approve</i></div><div class="tile c-notion"><b>Notion</b><i>Tap to approve</i></div></div></div>
+      <div class="shelf"><h4>Connected</h4><div class="lane">
+        <div class="tile c-gmail"><b>Gmail</b><i>On</i></div><div class="tile c-cal"><b>Calendar</b><i>On</i></div><div class="tile c-drive"><b>Drive</b><i>On</i></div><div class="tile c-1bb"><b>1BB</b><i>On</i></div><div class="tile c-utopia"><b>Utopia</b><i>On</i></div></div></div>
+      <div class="shelf"><h4>Popular</h4><div class="lane">
+        <div class="tile c-stripe"><b>Stripe</b><i>Add</i></div><div class="tile c-github"><b>GitHub</b><i>Add</i></div><div class="tile c-yt"><b>YouTube</b><i>Add</i></div><div class="tile c-zernio"><b>Zernio</b><i>Add</i></div></div></div>
+    </div>
+    <div class="label">Rendered CSS. Hover a tile.</div>
+  </section>
+
+  <p class="intro">Pick a number, or mix two (for example "1's orbit with 3's glass cards"). I'll then build it into the real page and give the orb's Dashboard and Connectors buttons the same look.</p>
+</div>
+</body>
+</html>

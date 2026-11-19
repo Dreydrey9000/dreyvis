@@ -215,6 +215,58 @@ def custom_add(name: str, url: str, key: str = "") -> str | None:
     return None
 
 
+def _claude_code_servers() -> dict:
+    """MCP servers from Claude Code's own config: user scope first, then any
+    project scope. Read fresh each time so new ones show up."""
+    try:
+        cfg = json.loads((Path.home() / ".claude.json").read_text())
+    except (OSError, ValueError):
+        return {}
+    found = {}
+    for proj in (cfg.get("projects") or {}).values():
+        for n, e in ((proj or {}).get("mcpServers") or {}).items():
+            found.setdefault(n, e)
+    found.update(cfg.get("mcpServers") or {})          # user scope wins
+    return {n: e for n, e in found.items()
+            if isinstance(e, dict) and (e.get("url") or e.get("command"))}
+
+
+def claude_code_list() -> list[dict]:
+    """What Claude Code has, for the import list. Names and hosts only."""
+    try:
+        mine = set(_read_file()["mcpServers"])
+    except ValueError:
+        mine = set()
+    out = []
+    for name, e in sorted(_claude_code_servers().items(), key=lambda kv: kv[0].lower()):
+        if e.get("url"):
+            u = urlsplit(e["url"])
+            where = u.netloc
+            # A web server with no saved key signs in through Claude Code; that
+            # sign-in may not carry over to Dreyvis.
+            note = "" if e.get("headers") else "may ask you to sign in"
+        else:
+            where, note = "runs on this Mac: " + Path(str(e["command"])).name, ""
+        out.append({"name": name, "where": where, "note": note, "added": name in mine})
+    return out
+
+
+def import_from_claude_code(name: str) -> str | None:
+    """Copy one server, exactly as Claude Code runs it, into connections.json."""
+    entry = _claude_code_servers().get(name)
+    if entry is None:
+        return f"Claude Code has no connector called {name}."
+    if not CUSTOM_NAME.fullmatch(name) or "__" in name or name == "jarvis":
+        return f"{name} isn't a name Dreyvis can use."
+    try:
+        body = _read_file()
+    except ValueError as e:
+        return str(e)
+    body["mcpServers"][name] = entry
+    _write_file(body)
+    return None
+
+
 def custom_remove(name: str) -> str | None:
     try:
         body = _read_file()
