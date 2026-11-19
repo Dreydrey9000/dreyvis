@@ -63,6 +63,17 @@ To run the server in the background and start it at login, copy `docs/com.drey.d
 | Say "ask Grok…" | Get Grok's answer, read out by Dreyvis |
 | Open the dashboard from the menu | See every run, session and how much of your plan is used |
 | **Cmd+3**, or the Connectors button | Add apps and custom connectors |
+| Say "read my texts from Sam" | Hear your recent iMessages |
+| Say "text Sam I'm running late" | Dreyvis reads the text back and sends it only after you say yes |
+
+## Mac permissions
+
+Texts and screen reading need two switches in System Settings, Privacy and Security, both for the Python that runs the server (`which python3.12` inside `.venv`):
+
+- **Full Disk Access**, to read texts and contacts.
+- **Screen Recording**, to see your screen.
+
+Both switches cover every script that uses that same Python, not only Dreyvis. The first time Dreyvis sends a text, macOS also asks once to let it control Messages.
 
 ## Connectors
 

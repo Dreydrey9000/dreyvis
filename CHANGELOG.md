@@ -1,5 +1,22 @@
 # Changelog
 
+## [2026-11-18] (evening)
+### Added
+- Texts: Dreyvis reads your iMessages and sends one only after reading it back and hearing a yes on a later turn. The two-step rule lives in messages_bridge.py, not in the prompt, so a text it read can't send one.
+- Dreyvis finds projects in ~/My Apps as well as the Desktop.
+- The persona now tries Composio for calendar and mail before saying it isn't connected.
+
+### Changed
+- Connectors page matches the orb: #050508, one sky blue, system font, a field of blue dots.
+- Connectors shows each app's real logo (initials only as a fallback), lists every app that needs signing in again at once instead of in a sideways row, and uses "Sign in again" everywhere for that one action.
+- Connector errors are plain sentences that stay on the card or in the restart banner instead of a toast that vanished.
+- Dashboard opens with one sentence on how today went, including specs waiting for review. On phones, run rows keep the project and reason, tabs wrap instead of hiding, and tapping a run scrolls to its details.
+- Dashboard speaks plainly: each run shows its project name and a short reason ("Stopped because Dreyvis restarted mid-build") instead of the raw build prompt. "Needs attention" became "Needs you" and only lists failures from the last 3 days that weren't redone later.
+- The voice and ears helpers show up as dreyvis-voice and dreyvis-ears in Activity Monitor.
+
+### Fixed
+- First spoken reply took 23s on average (80s worst) because the voice model loaded on the first sentence and often timed out. It now loads at startup; each sentence takes 0.3 to 0.9s.
+
 ## [2026-11-18]
 ### Added
 - Dreyvis.app (Electron 45): its own window, menu-bar on/off switch, Option+Space mic mute, open at login. Replaces using a browser tab.
@@ -11,7 +28,7 @@
 - Composio bridge (composio_search, composio_execute): Gmail and 1,000+ apps; execute is an acting tool and its results count as outside text.
 - 1BB connected through connections.json.
 - Connectors page (`/connectors`, Cmd+3, a button on the orb): 40 recommended apps plus search over all 1,000 Composio apps, with one-click sign-in links that update on their own. Built so adding an app no longer needs a terminal.
-- Connectors page redesign (Shelves layout on Aurora Glass, picked from a six-option board in docs/theme-board): rows for Sign in again, Connected, Popular and From Claude Code, unique app badges, its own remove dialog, and a pause button for the background motion.
+- Connectors page redesign (Shelves layout on Aurora Glass, picked from a six-option board in docs/theme-board): a row per group (sign in again first, then connected, popular and Claude Code), unique app badges, its own remove dialog, and a pause button for the background motion.
 - Import from Claude Code: one click copies a connector from ~/.claude.json. Utopia, Omi, Firecrawl and Zernio were added this way.
 - Saving or removing a custom connector no longer restarts the brain; the page asks first, so you don't lose the current chat by surprise.
 - Connector statuses answer from a cache and refresh in the background, so the page opens in about 0.06s instead of 3 to 46s.

@@ -481,6 +481,36 @@ TOOL_SPECS = [
         },
     },
     {
+        "name": "read_texts",
+        "description": (
+            "Read Drey's recent iMessages and texts on this Mac, newest last. Pass "
+            "contact (a name or number) for one conversation, or nothing for the "
+            "latest across everyone. Answer what he asked in a sentence; never read "
+            "a whole thread aloud."),
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "contact": {"type": "string", "description": "A name from his contacts, or a number."},
+                "limit": {"type": "integer", "description": "How many texts, 1-30. Default 10."},
+            },
+        },
+    },
+    {
+        "name": "send_text",
+        "description": (
+            "Send an iMessage. The first call only stages it and tells you to read "
+            "it back; when Drey says yes, call it again with the same to and "
+            "message and it sends. Never change the words between the two calls."),
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "to": {"type": "string", "description": "A name from his contacts, or a number or email."},
+                "message": {"type": "string", "description": "Exactly what the text says."},
+            },
+            "required": ["to", "message"],
+        },
+    },
+    {
         "name": "usage_status",
         "description": (
             "How much of the user's Claude subscription is used: the five-hour "

@@ -57,7 +57,7 @@ function bindAction(btn: HTMLButtonElement, run: RunRow): void {
     setTone(btn, "bad");
     actionHandler = () => void cancelRun(run.id);
   } else {
-    btn.textContent = "Retry";
+    btn.textContent = "Try again";
     setTone(btn, "accent");
     actionHandler = () => void retryRun(run.id);
   }
@@ -86,6 +86,7 @@ export function notifyRunChanged(run: RunRow): void {
 }
 
 export function closeDetail(): void {
+  const was = currentRunId;
   currentRunId = null;
   lastSeq = 0;
   backfillInFlight = false;
@@ -98,6 +99,8 @@ export function closeDetail(): void {
   costDd = null;
   pane().hidden = true;
   pane().replaceChildren();
+  // Put focus back on the run that was opened, so keyboard users keep their place.
+  if (was) document.querySelector<HTMLElement>(`[data-run-id="${CSS.escape(was)}"]`)?.focus();
 }
 
 function eventLine(ev: RunEvent): HTMLElement {
@@ -255,6 +258,14 @@ export async function openDetail(runId: string): Promise<void> {
 
   body.append(el("p", "pane-prompt", run.prompt), dl, actions, transcript);
   host.append(head, body);
+  // On a phone the details land below the list, off screen: bring them up
+  // and move focus there, so a tap visibly does something.
+  if (host.getBoundingClientRect().top > window.innerHeight * 0.6) {
+    const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    host.tabIndex = -1;
+    host.scrollIntoView({ block: "start", behavior: still ? "auto" : "smooth" });
+    host.focus({ preventScroll: true });
+  }
 
   // Load the TAIL, not the head — on a long build the last 200 events are the
   // ones you care about.

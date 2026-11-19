@@ -89,6 +89,7 @@ import ears
 import other_brains
 import composio_bridge
 import connectors
+import messages_bridge
 from brain import Brain, BrainConfig, MAX_BOOT_PROJECTS
 from speech import Priority, SpeechScheduler
 
@@ -235,7 +236,9 @@ def _scan_roots() -> list[Path]:
     override = os.getenv("JARVIS_PROJECT_ROOTS", "").strip()
     if override:
         return [Path(r).expanduser() for r in override.split(":") if r.strip()]
-    return [DESKTOP_PATH, project_maker.projects_root()]
+    # ~/My Apps is where Drey keeps his projects (335 repos); without it Dreyvis
+    # answered "Drey Design isn't one of my projects" for work he does every day.
+    return [DESKTOP_PATH, Path.home() / "My Apps", project_maker.projects_root()]
 
 
 _scan_cache: dict = {"at": 0.0, "value": []}
@@ -970,6 +973,8 @@ async def start_brain_and_speech() -> None:
     brain_instance.active_projects = _active_project_names
     # Warm the Connectors page's data so the first visit doesn't wait on Composio.
     _spawn(connectors.statuses())
+    # Load the voice now, not on the first reply (QuickSilver fix, 2026-11-18).
+    _spawn(tts.warm_kokoro())
     if os.getenv("JARVIS_BRAIN_AUTOSTART", "1") == "1":
         _spawn(brain_instance.start())
     else:
@@ -2362,6 +2367,7 @@ TAINTING_TOOLS = {
     # Dreyvis: an app's data (an email, a calendar invite, a Slack message) and
     # another AI's answer are somebody else's words, same as a web page.
     "composio_execute": "something from one of your connected apps",
+    "read_texts": "somebody's text message",
     "ask_model": "another AI's answer",
     # Repository files. A source comment or a README can carry an instruction
     # aimed squarely at the brain.
@@ -6162,6 +6168,13 @@ TOOL_HANDLERS["composio_execute"] = composio_bridge.execute
 # the turn has read outside text (an email it just fetched cannot tell it to reply).
 ACTING_TOOLS.add("composio_execute")
 
+# iMessage. Reading brings in other people's words; sending is staged by
+# messages_bridge and only goes out after Drey speaks again, and like every
+# acting tool it is refused on a turn that has read outside text.
+TOOL_HANDLERS["read_texts"] = messages_bridge.read_texts
+TOOL_HANDLERS["send_text"] = messages_bridge.send_text
+ACTING_TOOLS.add("send_text")
+
 
 # --- "what are you connected to?" ----------------------------------------
 #
@@ -6721,6 +6734,7 @@ async def voice_handler(ws: WebSocket):
                     log.info(f"User ({verdict}, ignored, {ago}): {text}")
                     continue
                 log.info(f"User: {text}")
+                messages_bridge.heard()       # send_text only sends after he has spoken again
                 if _is_fresh_start(text):
                     _spawn(_start_fresh())
                     continue

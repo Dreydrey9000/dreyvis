@@ -7,6 +7,13 @@ keeps it alive so the model loads once.
 Protocol: 4-byte big-endian length + raw float32 mono PCM at 16 kHz in on stdin,
           one JSON line {"text": "..."} out on stdout.
 """
+# Show up as "dreyvis-ears" in Activity Monitor instead of "Python" (~/.local/bin/pyname). Safe to delete.
+try:
+    import os as _os, runpy as _runpy
+    _runpy.run_path(_os.path.expanduser("~/.local/bin/pyname"))["name_me"]("dreyvis-ears")
+except Exception:
+    pass
+
 import json
 import struct
 import sys

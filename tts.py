@@ -43,18 +43,52 @@ def kokoro_enabled() -> bool:
     return os.getenv("JARVIS_TTS", "").lower() == "kokoro" and bool(KOKORO_PYTHON)
 
 
-async def _kokoro_chunk(text: str, timeout: float = 60.0) -> Optional[SynthResult]:
+READY = 0xFFFFFFFF        # the worker sends this once its model is loaded
+LOAD_TIMEOUT = 300.0      # loading the model can take minutes on a busy Mac; a sentence never should
+
+
+async def _start_kokoro() -> asyncio.subprocess.Process:
+    """Start the worker and wait for its model to load, on its own long clock.
+    Loading used to count against one sentence's 60s timeout: on a busy Mac the
+    load overran, the worker was killed mid-load, and the next sentence started
+    loading all over again (15-80s before Dreyvis spoke). Caller holds the lock."""
+    p = await asyncio.create_subprocess_exec(
+        KOKORO_PYTHON, str(Path(__file__).parent / "kokoro_worker.py"),
+        stdin=asyncio.subprocess.PIPE, stdout=asyncio.subprocess.PIPE,
+        env={**os.environ, "VIRTUAL_ENV": str(Path(KOKORO_PYTHON).parent.parent),
+             "PATH": f"{Path(KOKORO_PYTHON).parent}:{os.environ.get('PATH', '')}",
+             "KOKORO_VOICE": KOKORO_VOICE},
+    )
+    t0 = time.monotonic()
+    (marker,) = struct.unpack(">I", await asyncio.wait_for(p.stdout.readexactly(4), LOAD_TIMEOUT))
+    if marker != READY:
+        raise OSError(f"kokoro worker sent {marker} instead of ready")
+    log.info(f"Kokoro voice loaded in {time.monotonic() - t0:.1f}s")
+    return p
+
+
+async def warm_kokoro() -> None:
+    """Load the voice at server start so the first reply never waits for it."""
+    global _kokoro_proc
+    if not kokoro_enabled():
+        return
+    async with _kokoro_lock:
+        if _kokoro_proc is None or _kokoro_proc.returncode is not None:
+            try:
+                _kokoro_proc = await _start_kokoro()
+            except (asyncio.TimeoutError, asyncio.IncompleteReadError, OSError) as e:
+                log.error(f"Kokoro warm-up failed: {e!r}")
+                _kokoro_proc = None
+
+
+async def _kokoro_chunk(text: str, timeout: float = 30.0) -> Optional[SynthResult]:
     global _kokoro_proc
     t0 = time.monotonic()
     async with _kokoro_lock:
         try:
             if _kokoro_proc is None or _kokoro_proc.returncode is not None:
-                _kokoro_proc = await asyncio.create_subprocess_exec(
-                    KOKORO_PYTHON, str(Path(__file__).parent / "kokoro_worker.py"),
-                    stdin=asyncio.subprocess.PIPE, stdout=asyncio.subprocess.PIPE,
-                    env={**os.environ, "VIRTUAL_ENV": str(Path(KOKORO_PYTHON).parent.parent),
-                         "PATH": f"{Path(KOKORO_PYTHON).parent}:{os.environ.get('PATH', '')}"},
-                )
+                _kokoro_proc = await _start_kokoro()
+            t0 = time.monotonic()          # time the sentence, not the load
             p = _kokoro_proc
             p.stdin.write((json.dumps({"text": text, "voice": KOKORO_VOICE}) + "\n").encode())
             await p.stdin.drain()

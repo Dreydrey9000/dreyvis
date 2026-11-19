@@ -284,7 +284,7 @@ function renderNow(active: number, failures: number): void {
   m.nowDot.className = `dot ${active > 0 ? "dot--live" : "dot--void"} tone-${tone}`;
   setTone(m.nowRoot, tone);
   m.nowText.textContent =
-    active > 0 ? `${active} running` : runs.length > 0 ? "all quiet" : "no runs yet";
+    active > 0 ? `${active} running` : runs.length > 0 ? "nothing running" : "no runs yet";
 
   m.attn.hidden = failures === 0;
   m.attn.textContent = `${failures} need${failures === 1 ? "s" : ""} you`;
@@ -299,7 +299,7 @@ function setLink(state: Link): void {
   const text = document.getElementById("link-state-text");
   if (!host || !text) return;
   const spec = {
-    ok: { tone: "tone-ok", dot: "dot--done", label: "Link OK" },
+    ok: { tone: "tone-ok", dot: "dot--done", label: "Connected" },
     retrying: { tone: "tone-warn", dot: "dot--live", label: "Reconnecting" },
     down: { tone: "tone-bad", dot: "dot--fault", label: "Offline" },
   }[state];
@@ -320,10 +320,13 @@ function runRow(run: RunRow, opts: { attn?: boolean } = {}): HTMLElement {
     label: `${run.project_name} — ${style.label}`,
   });
 
+  r.root.dataset.runId = run.id;
+  // A failure that was later redone is history, not an alarm.
+  if (FAILED.has(run.status) && !opts.attn && !stillNeedsYou(run, runs)) r.root.classList.add("row--dim");
   r.setLead(statusDot(run.status));
   r.setTitle(run.project_name);
-  // The prompt is what actually tells two runs of the same project apart.
-  r.setSub(run.prompt.replace(/\s+/g, " "));
+  // A failed run says why, in plain words; the rest say what they were asked to do.
+  r.setSub(FAILED.has(run.status) ? plainError(run) : plainTask(run.prompt));
 
   const status = statusPill(run.status);
   status.classList.add("run-status");
@@ -340,6 +343,56 @@ function runRow(run: RunRow, opts: { attn?: boolean } = {}): HTMLElement {
     flash(r.root);
   }
   return r.root;
+}
+
+/** Specs waiting for review, reported by specs.ts whenever it repaints. */
+let specsWaiting = 0;
+document.addEventListener("dreyvis:specs-waiting", (e) => {
+  specsWaiting = (e as CustomEvent<number>).detail;
+  paint();
+});
+
+/** How today went, in one sentence a person would say. */
+function runsSummary(all: RunRow[], needYou: number): string {
+  const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
+  const running = all.filter((r) => ACTIVE.has(r.status)).length;
+  const start = new Date();
+  start.setHours(0, 0, 0, 0);
+  const today = all.filter((r) => new Date(r.created_at * 1000) >= start && !ACTIVE.has(r.status));
+  const stopped = today.filter((r) => FAILED.has(r.status)).length;
+  const parts = [running ? `${plural(running, "build")} running now.` : "Nothing building right now."];
+  if (today.length) parts.push(`Today: ${today.length - stopped} succeeded, ${stopped} failed${stopped && !needYou ? ", all redone since" : ""}.`);
+  if (needYou) parts.push(`${plural(needYou, "build")} need${needYou === 1 ? "s" : ""} you: tap one to try again.`);
+  if (specsWaiting) parts.push(`${plural(specsWaiting, "spec")} wait${specsWaiting === 1 ? "s" : ""} for your review in the Specs tab.`);
+  if (!needYou && !specsWaiting) parts.push("Nothing needs you.");
+  return parts.join(" ");
+}
+
+/** What a run was asked to do, minus the instructions written for the machine. */
+function plainTask(prompt: string): string {
+  const p = prompt.replace(/\s+/g, " ").trim();
+  if (/^\[Long build/i.test(p)) return "Full build from the agreed design";
+  const body = p.replace(/^\[[^\]]*\]\s*/, "");
+  const first = body.split(/(?<=[.!?])\s/)[0];
+  return first.length > 120 ? first.slice(0, 117) + "…" : first;
+}
+
+/** Why a run stopped, said the way you'd say it to a person. */
+function plainError(run: RunRow): string {
+  const e = (run.error ?? "").toLowerCase();
+  if (e.includes("server restarted")) return "Stopped because Dreyvis restarted mid-build";
+  if (e.includes("no conversation found")) return "Couldn't pick up where the last try left off";
+  if (e.includes("timed out") || e.includes("timeout")) return "Took too long and was stopped";
+  if (e.includes("rate limit") || e.includes("usage limit")) return "Hit your Claude usage limit";
+  const line = (run.error ?? "").split("\n").find((l) => l.trim() && !/^warning:/i.test(l.trim()));
+  return line ? line.trim().slice(0, 120) : "Stopped without saying why";
+}
+
+/** A failure only needs Drey if nothing has run in that project since. */
+function stillNeedsYou(run: RunRow, all: RunRow[]): boolean {
+  if (!FAILED.has(run.status)) return false;
+  if (Date.now() / 1000 - run.created_at > 3 * 86400) return false;
+  return !all.some((o) => o.project_name === run.project_name && o.created_at > run.created_at);
 }
 
 function renderInto(
@@ -363,9 +416,14 @@ function renderInto(
 function paint(): void {
   // Failures are pulled to the top of the view rather than left buried in
   // history — they still appear in History too, in their own place in time.
-  const allFailures = runs.filter((r) => FAILED.has(r.status));
+  const allFailures = runs.filter((r) => stillNeedsYou(r, runs));
   const failures = allFailures.slice(0, ATTENTION_LIMIT);
   renderNow(runs.filter((r) => ACTIVE.has(r.status)).length, allFailures.length);
+  const summary = document.getElementById("runs-summary");
+  if (summary) summary.textContent = runsSummary(runs, allFailures.length);
+  // The summary already says "Nothing building", so an empty box would only repeat it.
+  const activeSection = document.getElementById("active-section");
+  if (activeSection) activeSection.hidden = !runs.some((r) => ACTIVE.has(r.status));
   const attention = document.getElementById("attention-section");
   if (attention) attention.hidden = failures.length === 0;
   if (failures.length > 0) {

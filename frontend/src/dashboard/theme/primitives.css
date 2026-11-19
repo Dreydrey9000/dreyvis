@@ -326,7 +326,9 @@
 .row-lead { display: flex; align-items: center; }
 .row-main { display: flex; align-items: baseline; gap: var(--sp-3); min-width: 0; }
 .row-title {
-  flex: 0 1 auto;
+  /* Never squeezed by a long description: the project name is what tells rows apart. */
+  flex: 0 0 auto;
+  max-width: 40%;
   font-weight: 500;
   color: var(--text);
   white-space: nowrap;
@@ -831,6 +833,15 @@ button:disabled, .btn:disabled { opacity: 0.45; cursor: default; box-shadow: non
 @media (max-width: 900px) {
   .split, .split--aside { grid-template-columns: minmax(0, 1fr); }
   .split-stick { position: static; max-height: none; overflow: visible; }
+}
+/* Phones: the name and the reason are what an owner reads, so they get the
+   whole first line; status, time and size drop to a second line under them. */
+@media (max-width: 640px) {
+  .row { grid-template-columns: auto minmax(0, 1fr); }
+  .row-trail { grid-column: 2 / -1; justify-content: flex-start; }
+  .row-main { flex-wrap: wrap; row-gap: 2px; }
+  .row-title { max-width: 100%; }
+  .row-sub { flex-basis: 100%; white-space: normal; }
 }
 
 .split-detail.is-sheet {

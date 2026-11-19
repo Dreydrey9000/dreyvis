@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Dreyvis · Run Control</title>
+    <title>Dreyvis · Dashboard</title>
     <link rel="stylesheet" href="/src/dashboard/style.css" />
   </head>
   <body>
@@ -12,7 +12,7 @@
       <div class="shell-head-top">
         <div class="brand">
           <span class="brand-mark">DREYVIS</span>
-          <span class="brand-sub">Run Control</span>
+          <span class="brand-sub">Dashboard</span>
         </div>
         <div id="link-state" class="link-state tone-ok">
           <span class="dot dot--done tone-ok" aria-hidden="true"></span>
@@ -49,11 +49,13 @@
     <main class="shell-main">
       <!-- ── RUNS ────────────────────────────────────────────────────────── -->
       <div id="runs-view" class="view">
+        <!-- The answer in one sentence, before any table. -->
+        <p id="runs-summary" class="runs-summary" role="status"></p>
         <!-- Failures come first: the thing you must not scroll past. Hidden
              entirely when there is nothing wrong. -->
         <section id="attention-section" class="panel panel--alert tone-bad" hidden>
           <header class="panel-head">
-            <h2 class="panel-title">Needs Attention</h2>
+            <h2 class="panel-title">Needs you</h2>
             <span id="attention-meta" class="panel-meta"></span>
           </header>
           <div class="panel-body">
@@ -63,7 +65,7 @@
 
         <section id="active-section" class="panel">
           <header class="panel-head">
-            <h2 class="panel-title">Active</h2>
+            <h2 class="panel-title">Running now</h2>
             <span id="active-meta" class="panel-meta"></span>
           </header>
           <div class="panel-body">
@@ -73,7 +75,7 @@
 
         <section id="history-section" class="panel">
           <header class="panel-head">
-            <h2 class="panel-title">History</h2>
+            <h2 class="panel-title">Earlier runs</h2>
             <span id="history-meta" class="panel-meta"></span>
           </header>
           <div class="panel-body">

@@ -213,6 +213,15 @@ function paintBadge(): void {
   badge.hidden = waiting === 0;
   badge.textContent = String(waiting);
   badge.setAttribute("aria-label", `${waiting} waiting on you`);
+  // Say what the number means on the tab itself (hover and screen readers),
+  // and let the Runs summary count it too.
+  const tab = id("tab-specs");
+  if (tab) {
+    const meaning = waiting ? `Specs: ${waiting} waiting for your review` : "Specs";
+    tab.title = meaning;
+    tab.setAttribute("aria-label", meaning);
+  }
+  document.dispatchEvent(new CustomEvent("dreyvis:specs-waiting", { detail: waiting }));
 }
 
 function paintMaster(): void {

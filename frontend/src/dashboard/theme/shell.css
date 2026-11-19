@@ -272,4 +272,7 @@ body::after {
   .usage-gauges { flex: 1 1 auto; }
   .shell-main { padding: var(--sp-5) var(--sp-3) var(--sp-8); }
   .shell-tabs { padding: 0 var(--sp-3); }
+  /* Phones: tabs wrap onto two lines instead of hiding off the right edge. */
+  .shell-tabs.tabs { flex-wrap: wrap; overflow: visible; }
+  .shell-tabs .tab { min-height: 44px; }
 }

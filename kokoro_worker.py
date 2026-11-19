@@ -8,8 +8,16 @@ Protocol: one JSON line in on stdin  {"text": "...", "voice": "bm_george"}
           4-byte big-endian length + MP3 bytes out on stdout (length 0 = failed).
 MP3 because speech.py reads the clip length from MP3 frames (ack_floor_seconds).
 """
+# Show up as "dreyvis-voice" in Activity Monitor instead of "Python" (~/.local/bin/pyname). Safe to delete.
+try:
+    import os as _os, runpy as _runpy
+    _runpy.run_path(_os.path.expanduser("~/.local/bin/pyname"))["name_me"]("dreyvis-voice")
+except Exception:
+    pass
+
 import io
 import json
+import os
 import struct
 import subprocess
 import sys
@@ -38,6 +46,15 @@ def synth(text: str, voice: str) -> bytes:
     )
     return mp3.stdout if mp3.returncode == 0 else b""
 
+
+# Load the model now, run one tiny warm-up sentence, then tell tts.py we're ready.
+# Loading is the slow part; doing it before any real sentence keeps replies quick.
+try:
+    synth("Ready.", os.environ.get("KOKORO_VOICE") or "bm_george")
+except Exception as e:
+    print(f"kokoro_worker warm-up: {e!r}", file=sys.stderr)
+out.write(struct.pack(">I", 0xFFFFFFFF))
+out.flush()
 
 for line in sys.stdin:
     try:
