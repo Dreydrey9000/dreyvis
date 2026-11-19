@@ -11,6 +11,7 @@ Secrets never leave this module: the page sees names, hosts and statuses only.
 """
 from __future__ import annotations
 
+import asyncio
 import json
 import os
 import re
@@ -108,12 +109,26 @@ async def catalog() -> list[dict]:
         return []
 
 
+_refresh_task: "asyncio.Task | None" = None
+
+
 async def statuses(fresh: bool = False) -> dict[str, str]:
-    """{slug: "connected" | "waiting" | "expired"}. ACTIVE wins, then a sign-in
-    that's still open (INITIALIZING), then EXPIRED/REVOKED."""
+    """{slug: "connected" | "waiting" | "expired"}. Answers from the last check
+    straight away and refreshes in the background: the Composio call takes
+    seconds inside the server, and the page shouldn't wait on it. Only the very
+    first call (nothing cached yet) waits."""
+    global _refresh_task
+    if _status_cache[0] == 0:
+        return await _refresh_statuses()
+    if fresh or time.time() - _status_cache[0] > STATUS_MAX_AGE:
+        if _refresh_task is None or _refresh_task.done():
+            _refresh_task = asyncio.create_task(_refresh_statuses())
+    return _status_cache[1]
+
+
+async def _refresh_statuses() -> dict[str, str]:
+    """ACTIVE wins, then a sign-in that's still open (INITIALIZING), then EXPIRED/REVOKED."""
     global _status_cache
-    if not fresh and time.time() - _status_cache[0] < STATUS_MAX_AGE:
-        return _status_cache[1]
     code, out = await composio_bridge._run(["connections", "list"])
     try:
         rows = json.loads(out)

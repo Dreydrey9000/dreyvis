@@ -4,186 +4,487 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Dreyvis Connectors</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600&display=swap" rel="stylesheet">
 <style>
+  /* Theme: Shelves (structure) + Aurora Glass (materials). See THEME-DECISION.md. */
   :root {
-    --bg: #060b14; --panel: #0d1626; --line: #1f3352; --text: #e6efff; --dim: #8fa6c8;
-    --accent: #5aa0ff; --ok: #4cd08a; --warn: #f2b84b; --bad: #ff7a7a;
+    --bg: #040914; --text: #e8eefc; --dim: #a9bcdc; --accent: #5aa0ff;
+    --ok: #6dffc8; --wait: #ffd76d; --bad: #ff8f8f;
+    --glass: rgba(255,255,255,.07); --glass-line: rgba(255,255,255,.16);
   }
   * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--text);
-    font: 400 16px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
-  main { max-width: 1040px; margin: 0 auto; padding: 64px 24px 96px; }
-  h1 { font-size: 32px; font-weight: 600; margin: 0 0 8px; }
-  h2 { font-size: 20px; font-weight: 600; margin: 48px 0 16px; }
-  p.lead { color: var(--dim); margin: 0; max-width: 64ch; }
-  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(232px, 1fr)); gap: 12px; }
-  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px;
-    display: flex; flex-direction: column; gap: 8px; min-height: 128px; }
-  .card .name { font-weight: 600; }
-  .card .about { color: var(--dim); flex: 1; }
-  .row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-  .badge { font-size: 16px; color: var(--dim); }
-  .badge.connected { color: var(--ok); } .badge.expired { color: var(--warn); }
-  button { font: inherit; font-weight: 600; color: var(--text); background: transparent;
-    border: 1px solid var(--line); border-radius: 8px; padding: 0 16px; min-height: 40px; cursor: pointer; }
-  button:hover { border-color: var(--accent); }
-  button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-  button:disabled { opacity: .5; cursor: default; }
+  html { background: var(--bg); }
+  body { margin: 0; color: var(--text); background: var(--bg); font: 400 16px/1.5 "Sora", -apple-system, sans-serif; }
+  /* The aurora: two slow blurred lights behind everything. */
+  .aurora { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+  .aurora i { position: absolute; border-radius: 50%; filter: blur(96px); opacity: .55; animation: drift 18s ease-in-out infinite alternate; }
+  .aurora i:nth-child(1) { width: 640px; height: 480px; left: -160px; top: -200px; background: #1565ff; }
+  .aurora i:nth-child(2) { width: 560px; height: 480px; right: -200px; top: 32%; background: #00c2b8; animation-delay: -8s; }
+  .aurora i:nth-child(3) { width: 480px; height: 400px; left: 24%; bottom: -280px; background: #2f6bff; opacity: .35; animation-delay: -4s; }
+  @keyframes drift { to { transform: translate(64px, 48px) scale(1.12); } }
+
+  main { --gutter: 24px; position: relative; z-index: 1; max-width: 1200px; margin: 0 auto; padding: 96px var(--gutter); }
+  h1 { font-size: 40px; font-weight: 600; margin: 0; line-height: 1.2; }
+  .summary { color: var(--dim); margin: 8px 0 0; font-size: 20px; }
+  .summary b { color: var(--text); font-weight: 600; }
+  /* Spotlight Entrance, only when the page is on screen; a hidden window would freeze it invisible. */
+  .play .rise { animation: rise .7s cubic-bezier(.2,.8,.2,1) both; }
+  .play .rise.d2 { animation-delay: .12s; }
+  @keyframes rise { from { opacity: 0; transform: translateY(24px); filter: blur(12px); } }
+
+  /* Restart prompt: shows only when saved connectors aren't loaded yet. */
+  .banner { position: relative; z-index: 5; margin: 32px 0 0; display: none; align-items: center; gap: 16px; flex-wrap: wrap;
+    padding: 16px 24px; border-radius: 20px; background: rgba(20,40,80,.55); border: 1px solid rgba(90,160,255,.45);
+    backdrop-filter: blur(24px) saturate(150%); -webkit-backdrop-filter: blur(24px) saturate(150%); }
+  .banner.show { display: flex; }
+  .banner p { margin: 0; flex: 1 1 320px; }
+  .banner small { display: block; color: var(--dim); font-size: 16px; }
+
+  .shelf { margin-top: 48px; }
+  .shelf-head { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+  .shelf-head h2 { font-size: 24px; font-weight: 600; margin: 0; }
+  .shelf-head .n { color: var(--dim); }
+  .shelf-head .arrows { margin-left: auto; display: flex; gap: 8px; }
+  /* Rows run to the window edge so the cut-off tile reads as "more this way". */
+  .lane { display: flex; gap: 16px; overflow-x: auto; scroll-snap-type: x proximity; padding: 8px var(--gutter) 16px 0; margin: -8px calc(-1 * var(--gutter)) 0 0;
+    scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.25) transparent; }
+  .lane::-webkit-scrollbar { height: 8px; } .lane::-webkit-scrollbar-thumb { background: rgba(255,255,255,.25); border-radius: 8px; }
+  .empty { color: var(--dim); margin: 0; }
+
+  .tile { --c: #5aa0ff; flex: 0 0 248px; min-width: 0; max-width: 248px; scroll-snap-align: start; min-height: 168px; border-radius: 20px; padding: 16px;
+    display: flex; flex-direction: column; gap: 8px; position: relative;
+    background: linear-gradient(140deg, color-mix(in srgb, var(--c) 34%, transparent), var(--glass) 70%);
+    border: 1px solid var(--glass-line); backdrop-filter: blur(20px) saturate(140%); -webkit-backdrop-filter: blur(20px) saturate(140%);
+    transition: transform .25s cubic-bezier(.2,.8,.2,1), box-shadow .25s; }
+  .tile:hover, .tile:focus-within { transform: translateY(-4px); box-shadow: 0 16px 40px color-mix(in srgb, var(--c) 35%, transparent); }
+  .tile .top { display: flex; align-items: center; gap: 12px; }
+  .ic { width: 40px; height: 40px; flex: none; border-radius: 12px; background: var(--c); display: grid; place-items: center;
+    font-weight: 600; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.35); }
+  .ic.light { color: #111; text-shadow: none; }
+  .tile .name { font-weight: 600; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
+  .tile .err { color: var(--bad); margin: 0; }
+  .tile .err a, .msg a { color: #9cc8ff; }
+  .tile .about { color: var(--dim); flex: 1; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .tile .foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .st { font-weight: 600; } .st.ok { color: var(--ok); } .st.wait { color: var(--wait); } .st.bad { color: var(--bad); } .st.dim { color: var(--dim); font-weight: 400; }
+  .tile.waiting .ic { animation: glow 2s ease-in-out infinite; }
+  @keyframes glow { 50% { box-shadow: 0 0 24px 4px var(--c); } }
+
+  button { font: inherit; font-weight: 600; color: var(--text); background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.28);
+    border-radius: 999px; padding: 0 16px; min-height: 44px; cursor: pointer; transition: background .2s, border-color .2s; }
+  button:hover { background: rgba(255,255,255,.16); border-color: rgba(255,255,255,.5); }
+  button:focus-visible, input:focus-visible, .lane:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  button[aria-disabled="true"] { opacity: .5; cursor: default; }
+  .skip { position: absolute; left: 16px; top: -64px; z-index: 20; background: var(--accent); color: #04101f; font-weight: 600;
+    padding: 8px 16px; border-radius: 999px; text-decoration: none; }
+  .skip:focus { top: 16px; }
+  .still .aurora i, .still .tile.waiting .ic { animation-play-state: paused; }
+  .hero { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  dialog { color: var(--text); background: rgba(12,22,44,.92); border: 1px solid var(--glass-line); border-radius: 24px; padding: 24px; max-width: 420px;
+    backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); }
+  dialog::backdrop { background: rgba(2,6,14,.6); }
+  dialog h3 { margin: 0 0 8px; font-size: 20px; font-weight: 600; }
+  dialog p { margin: 0 0 24px; color: var(--dim); }
+  dialog .row { display: flex; gap: 12px; justify-content: flex-end; }
+  #shelves:empty + .after { display: none; }
   button.primary { background: var(--accent); border-color: var(--accent); color: #04101f; }
-  input { font: inherit; color: var(--text); background: #08111f; border: 1px solid var(--line);
-    border-radius: 8px; padding: 0 12px; min-height: 44px; width: 100%; }
+  button.primary:hover { background: #7db5ff; }
+  button.accent { border-color: var(--accent); color: #cfe2ff; }
+  /* Fix-it actions (Reconnect, Open sign-in) are filled; browsing (Add) stays outlined. */
+  button.fix { background: var(--accent); border-color: var(--accent); color: #04101f; }
+  button.fix:hover { background: #7db5ff; }
+  .shelf-head .n.urgent { color: var(--bad); font-weight: 600; }
+  .arrows button { width: 40px; padding: 0; }
+
+  input { font: inherit; color: var(--text); background: rgba(4,9,20,.6); border: 1px solid var(--glass-line); border-radius: 12px;
+    padding: 0 16px; min-height: 48px; width: 100%; }
+  input::placeholder { color: #7f92b4; }
+  .search { max-width: 560px; }
+
+  .panel { border-radius: 24px; padding: 24px; background: var(--glass); border: 1px solid var(--glass-line);
+    backdrop-filter: blur(20px) saturate(140%); -webkit-backdrop-filter: blur(20px) saturate(140%); }
+  .form { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; align-items: end; }
   label { display: block; font-weight: 600; margin-bottom: 4px; }
-  .hint { color: var(--dim); font-size: 16px; margin-top: 4px; }
-  .form { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 24px;
-    display: grid; gap: 16px; max-width: 640px; }
-  .msg { min-height: 24px; }
+  .key-hint { margin: -8px 0 0; }
+  /* Four fields across: put the key note right under the Key field. */
+  @media (min-width: 1100px) { .form { grid-template-columns: repeat(4, 1fr); } .key-hint { grid-column: 3; } }
+  .hint { color: var(--dim); margin: 4px 0 0; }
+  .msg { margin: 16px 0 0; } .msg:empty { display: none; }
+  .summary .warn { color: var(--bad); }
   .msg.err { color: var(--bad); } .msg.ok { color: var(--ok); }
-  .list { display: grid; gap: 8px; }
-  .item { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px; }
-  .empty { color: var(--dim); }
-  #search { max-width: 480px; margin-bottom: 16px; }
-  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
-  @media (max-width: 600px) { main { padding: 64px 16px; } h1 { font-size: 24px; } }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+  /* Success Bloom: shown only after Composio confirms the connection. */
+  .toast { position: fixed; right: 24px; bottom: 24px; z-index: 10; padding: 16px 24px; border-radius: 16px; display: flex; align-items: center; gap: 12px;
+    background: rgba(10,40,32,.8); border: 1px solid rgba(109,255,200,.5); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    transform: translateY(16px); opacity: 0; transition: transform .35s, opacity .35s; pointer-events: none; }
+  .toast.show { transform: none; opacity: 1; }
+  .toast .bloom { width: 24px; height: 24px; border-radius: 50%; background: var(--ok); position: relative; }
+  .toast.show .bloom::after { content: ""; position: absolute; inset: 0; border-radius: 50%; border: 2px solid var(--ok); animation: bloom .9s ease-out; }
+  @keyframes bloom { to { transform: scale(2.6); opacity: 0; } }
+
+  @media (max-width: 600px) {
+    main { --gutter: 16px; padding: 64px var(--gutter); }
+    h1 { font-size: 32px; }
+    .tile { flex-basis: 224px; }
+    .shelf-head .arrows { display: none; }
+    .tile { max-width: 224px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
 </style>
 </head>
 <body>
+<a class="skip" href="#h-search">Skip to search and custom connectors</a>
+<div class="aurora" aria-hidden="true"><i></i><i></i><i></i></div>
 <main>
-  <h1>Connectors</h1>
-  <p class="lead">Connect an app once and Dreyvis can use it when you ask. Anything that sends or changes something still waits for your spoken yes.</p>
-  <p id="load" class="msg" role="status">Loading your connectors…</p>
+  <div class="hero"><div><h1 class="rise">Connectors</h1>
+  <p class="summary rise d2" id="summary" role="status">Loading your connectors…</p></div>
+  <button type="button" id="still" aria-pressed="false">Pause background motion</button></div>
+  <p class="sr" id="live" aria-live="polite"></p>
 
-  <h2>Connected</h2>
-  <div id="mine" class="list"></div>
+  <div class="banner" id="banner" role="region" aria-label="Restart needed">
+    <p>New connectors are saved. Restart Dreyvis's brain to load them?
+      <small>This clears the current chat. Builds keep running.</small></p>
+    <button class="primary" type="button" id="restart">Restart now</button>
+    <button type="button" id="later">Later</button>
+  </div>
 
-  <h2>Recommended</h2>
-  <div id="rec" class="grid"></div>
+  <div id="shelves"></div>
+  <div class="after">
+  <section class="shelf" aria-labelledby="h-search">
+    <div class="shelf-head"><h2 id="h-search" tabindex="-1">Find any app</h2><span class="n" id="search-n" aria-live="polite"></span></div>
+    <label for="search" class="sr">Search all apps</label>
+    <input id="search" class="search" type="search" placeholder="Search 1,000 apps" autocomplete="off">
+    <div class="lane" id="results" style="margin-top:16px"></div>
+  </section>
 
-  <h2>All apps</h2>
-  <label for="search" class="sr">Search all apps</label>
-  <input id="search" type="search" placeholder="Search 1,000 apps, like Mailchimp or HighLevel" autocomplete="off">
-  <div id="all" class="grid"></div>
-
-  <h2>Custom connector</h2>
-  <form id="custom" class="form">
-    <p class="hint" style="margin:0">Any MCP server with a web address. Use this for tools Composio doesn't have, like your own 1BB or a company's MCP link.</p>
-    <div><label for="c-name">Name</label><input id="c-name" required maxlength="64" placeholder="my-crm"></div>
-    <div><label for="c-url">Address</label><input id="c-url" required type="url" placeholder="https://example.com/mcp">
-      <div class="hint">Starts with https://.</div></div>
-    <div><label for="c-key">Key (optional)</label><input id="c-key" type="password" autocomplete="off" placeholder="Paste it if the service gave you one">
-      <div class="hint">Saved only on this Mac, never shown again.</div></div>
-    <div class="row"><button class="primary" type="submit">Add connector</button><span id="c-msg" class="msg" role="status"></span></div>
-  </form>
+  <section class="shelf" aria-labelledby="h-custom">
+    <div class="shelf-head"><h2 id="h-custom">Add a custom connector</h2></div>
+    <form id="custom" class="panel">
+      <p class="hint" style="margin:0 0 16px">Any MCP server with a web address, for tools that aren't in the app list.</p>
+      <div class="form">
+        <div><label for="c-name">Name</label><input id="c-name" required maxlength="64" placeholder="my-crm" autocapitalize="off" spellcheck="false" autocomplete="off"></div>
+        <div><label for="c-url">Address</label><input id="c-url" required type="url" placeholder="https://example.com/mcp"></div>
+        <div><label for="c-key">Key (optional)</label><input id="c-key" type="password" autocomplete="off" placeholder="If the service gave you one" aria-describedby="c-key-hint"></div>
+        <div><button class="accent" type="submit" style="width:100%">Add connector</button></div>
+        <p class="hint key-hint" id="c-key-hint">Keys stay on this Mac and are never shown again.</p>
+      </div>
+      <p id="c-msg" class="msg" role="status"></p>
+    </form>
+  </section>
+  </div>
 </main>
+<dialog id="confirm" aria-labelledby="confirm-h">
+  <h3 id="confirm-h"></h3><p id="confirm-p"></p>
+  <div class="row"><button type="button" value="no" id="confirm-no">Keep it</button><button type="button" class="primary" id="confirm-yes">Remove</button></div>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"><span class="bloom" aria-hidden="true"></span><span id="toast-text"></span></div>
 <script>
 const $ = (id) => document.getElementById(id);
-let data = { recommended: [], all: [], custom: [] };
-const waiting = new Set();          // apps whose sign-in page is open
+const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+// Start the entrance only once the window is actually drawing frames; otherwise the text just shows.
+if (!reduce) requestAnimationFrame(() => document.body.classList.add("play"));
 
+let data = null, lastJson = "", shownCount = 0, bannerHidden = false;
+const waiting = new Map();     // apps whose sign-in we started -> when
+const tileNote = new Map();    // slug -> {text, url}: an error or a fallback link shown on the tile
+const inflight = new Set();    // apps with a sign-in request on its way
+let quietUntil = 0;            // ignore taps briefly after tiles move, so a double-tap never hits the next app
+const announce = (t) => { $("live").textContent = ""; setTimeout(() => { $("live").textContent = t; }, 50); };
+
+// Each app's colour, as a plain fill. No logos. Unknown apps get a steady colour from their name.
+const COLORS = { gmail:"#ea4335", googlecalendar:"#4285f4", googledrive:"#0f9d58", googledocs:"#4285f4", googlesheets:"#0f9d58",
+  googlemeet:"#00897b", slack:"#611f69", notion:"#e8e8e8", github:"#6e7681", linear:"#5e6ad2", stripe:"#635bff", calendly:"#006bff",
+  cal:"#292929", zoom:"#2d8cff", airtable:"#fcb400", hubspot:"#ff7a59", youtube:"#ff0000", instagram:"#e1306c", linkedin:"#0a66c2",
+  twitter:"#1d9bf0", facebook:"#1877f2", reddit:"#ff4500", discord:"#5865f2", whatsapp:"#25d366", dropbox:"#0061ff", one_drive:"#0078d4",
+  outlook:"#0078d4", figma:"#f24e1e", canva:"#00c4cc", asana:"#f06a6a", clickup:"#7b68ee", trello:"#0079bf", todoist:"#e44332",
+  jira:"#0052cc", shopify:"#5e8e3e", supabase:"#3ecf8e", elevenlabs:"#8b8b8b", heygen:"#7559ff", firecrawl:"#ff6b2c",
+  perplexityai:"#20808d", "1bb":"#d4a53c", utopia:"#22c3a6", "omi-memory":"#ff8a3d", zernio:"#00b4d8", "firecrawl-keyed":"#ff6b2c" };
+const LIGHT = new Set(["notion", "airtable"]);
+function color(key) {
+  if (COLORS[key]) return COLORS[key];
+  let h = 0; for (const ch of key) h = (h * 31 + ch.charCodeAt(0)) % 360;
+  return `hsl(${h} 65% 48%)`;
+}
+// Two-letter badges, unique across the page: Gmail "GM" and Google Meet can't both be "GM".
+const badges = new Map(), taken = new Set();
+function initial(key, name) {
+  if (badges.has(key)) return badges.get(key);
+  const clean = name.replace(/[^A-Za-z0-9 ]/g, " ").trim().toUpperCase(), words = clean.split(/\s+/), flat = clean.replace(/ /g, "");
+  const tries = [words.length > 1 ? words[0][0] + words[1][0] : flat.slice(0, 2)];
+  for (let i = 1; i < flat.length; i++) tries.push(flat[0] + flat[i]);
+  for (const c of "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ") tries.push(flat[0] + c);
+  const pick = tries.find((t) => !taken.has(t)) || tries[0];
+  taken.add(pick); badges.set(key, pick);
+  return pick;
+}
+// "agent-native-plans" reads as "Agent native plans".
+function plain(slug) { const s = slug.replace(/[-_]+/g, " ").trim(); return s.charAt(0).toUpperCase() + s.slice(1); }
 function el(tag, cls, text) { const n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; }
 
-function badge(status, slug) {
-  if ((waiting.has(slug) || status === "waiting") && status !== "connected") return el("span", "badge", "Waiting for your approval");
-  if (status === "connected") return el("span", "badge connected", "Connected");
-  if (status === "expired") return el("span", "badge expired", "Sign-in expired");
-  return el("span", "badge", "");
+// Buttons stay focusable while busy (aria-disabled, not disabled), so keyboard users never get thrown to the top.
+function btn(label, aria, onclick, cls) {
+  const b = el("button", cls || "", label); b.type = "button"; b.setAttribute("aria-label", aria);
+  b.onclick = () => { if (b.getAttribute("aria-disabled") !== "true" && Date.now() >= quietUntil) onclick(b); };
+  return b;
+}
+function busy(b, on, text) { b.setAttribute("aria-disabled", on ? "true" : "false"); if (text) b.textContent = text; }
+
+async function post(url, body) {
+  const r = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body || {}) });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.error || "Dreyvis couldn't do that. Try again.");
+  return j;
 }
 
-function appCard(a) {
-  const c = el("div", "card");
-  c.append(el("div", "name", a.name), el("div", "about", a.about || ""));
-  const row = el("div", "row");
-  row.append(badge(a.status, a.slug));
-  if (a.status !== "connected") {
-    const b = el("button", "", a.status === "expired" ? "Reconnect" : a.status === "waiting" ? "Open sign-in" : "Add");
-    b.type = "button";
-    b.setAttribute("aria-label", `${b.textContent} ${a.name}`);
-    b.onclick = () => addApp(a, b);
-    row.append(b);
+function tile({ key, name, about, status, button, cls, note }) {
+  const t = el("div", "tile" + (cls ? " " + cls : ""));
+  t.style.setProperty("--c", color(key));
+  const top = el("div", "top"), ic = el("span", "ic" + (LIGHT.has(key) ? " light" : ""), initial(key, name));
+  ic.setAttribute("aria-hidden", "true");
+  top.append(ic, el("span", "name", name));
+  const foot = el("div", "foot");
+  foot.append(status || el("span"));
+  if (button) foot.append(button);
+  t.append(top, el("div", "about", about || ""));
+  if (note) {
+    const p = el("p", "err", note.text + " ");
+    if (note.url) { const a = el("a", "", "Open the sign-in page"); a.href = note.url; a.target = "_blank"; a.rel = "noopener"; p.append(a); }
+    if (note.ok) p.style.color = "var(--dim)";
+    t.append(p);
   }
-  c.append(row);
-  return c;
+  t.append(foot);
+  return t;
 }
 
-async function addApp(a, btn) {
-  btn.disabled = true; btn.textContent = "Opening…";
-  try {
-    const r = await fetch("/api/connectors/link", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ slug: a.slug }) });
-    const j = await r.json();
-    if (!r.ok) throw new Error(j.error || "Could not start the sign-in.");
-    window.open(j.url, "_blank");
-    waiting.add(a.slug); render(); poll(a.slug, Date.now());
-  } catch (e) { btn.disabled = false; btn.textContent = "Try again"; $("load").textContent = e.message; $("load").className = "msg err"; }
+function appTile(a) {
+  const isWaiting = a.status === "waiting" || (waiting.has(a.slug) && a.status !== "connected");
+  const status = a.status === "connected" ? el("span", "st ok", "Connected")
+    : isWaiting ? el("span", "st wait", "Waiting for you")
+    : a.status === "expired" ? el("span", "st bad", "Expired") : el("span", "st dim", "Not added");
+  const label = a.status === "connected" ? null : isWaiting ? "Open sign-in" : a.status === "expired" ? "Reconnect" : "Add";
+  // Fixing a broken connection outranks browsing for a new one.
+  const button = label && btn(label, `${label}: ${a.name}`, (b) => addApp(a, b), label === "Add" ? "" : "fix");
+  return tile({ key: a.slug, name: a.name, about: a.about, status, button, cls: isWaiting ? "waiting" : "", note: tileNote.get(a.slug) });
 }
 
-async function poll(slug, started) {
-  await new Promise((r) => setTimeout(r, 4000));
-  await load(true);
-  const hit = [...data.recommended, ...data.all].find((a) => a.slug === slug);
-  if (hit && hit.status === "connected") { waiting.delete(slug); render(); return; }
-  if (Date.now() - started < 5 * 60 * 1000) poll(slug, started);
-  else { waiting.delete(slug); render(); }
+function customTile(c) {
+  const failed = (data.brain?.failed || []).includes(c.name);
+  return tile({ key: c.name, name: plain(c.name), about: (c.where.startsWith("local program") ? "Runs on this Mac" : "Web connector") + (c.has_key ? ", key saved" : ""),
+    status: failed ? el("span", "st bad", "Couldn't start") : el("span", "st ok", "Custom"),
+    button: btn("Remove", `Remove ${plain(c.name)}`, (b) => removeCustom(c.name, b)) });
+}
+
+function claudeTile(c) {
+  const name = plain(c.name);
+  const about = c.where.startsWith("runs on this Mac") ? "Runs on this Mac" : (c.note ? "Web connector, may ask you to sign in" : "Web connector");
+  const button = c.added ? null : btn("Add", `Add ${name} to Dreyvis`, (b) => importCC(c.name, b));
+  return tile({ key: c.name, name, about, note: tileNote.get("cc:" + c.name),
+    status: c.added ? el("span", "st ok", "Added") : el("span", "st dim", "Not added"), button });
+}
+
+function shelf(id, title, tiles, emptyText) {
+  const s = el("section", "shelf"); s.setAttribute("aria-labelledby", "h-" + id);
+  const head = el("div", "shelf-head"), h = el("h2", "", title); h.id = "h-" + id;
+  head.append(h, el("span", "n" + (id === "expired" ? " urgent" : ""), tiles.length ? String(tiles.length) : ""));
+  // The row itself takes focus, so arrow keys scroll it even where no tile has a button.
+  const lane = el("div", "lane"); lane.tabIndex = 0; lane.setAttribute("role", "region"); lane.setAttribute("aria-label", `${title}, scrolls sideways`);
+  if (tiles.length > 3) {
+    const step = () => Math.max(lane.clientWidth * 0.8, 264), go = (d) => lane.scrollBy({ left: d * step(), behavior: reduce ? "auto" : "smooth" });
+    const left = btn("←", `Scroll ${title} left`, () => go(-1)), right = btn("→", `Scroll ${title} right`, () => go(1));
+    const ends = () => { busy(left, lane.scrollLeft <= 2); busy(right, lane.scrollLeft + lane.clientWidth >= lane.scrollWidth - 2); };
+    lane.addEventListener("scroll", ends, { passive: true }); requestAnimationFrame(ends); setTimeout(ends, 0);
+    const arrows = el("div", "arrows"); arrows.append(left, right); head.append(arrows);
+  }
+  lane.append(...(tiles.length ? tiles : [el("p", "empty", emptyText)]));
+  s.append(head, lane);
+  return s;
 }
 
 function render() {
-  const all = [...data.recommended, ...data.all];
-  const mine = $("mine"); mine.replaceChildren();
-  const connected = all.filter((a) => a.status === "connected");
-  for (const a of connected) { const i = el("div", "item row"); i.append(el("span", "name", a.name), el("span", "badge connected", "Connected")); mine.append(i); }
-  for (const c of data.custom) {
-    const i = el("div", "item row");
-    const left = el("div"); left.append(el("div", "name", `${c.name} (custom)`), el("div", "hint", c.where + (c.has_key ? " · key saved" : "")));
-    const rm = el("button", "", "Remove"); rm.type = "button"; rm.setAttribute("aria-label", `Remove ${c.name}`);
-    rm.onclick = () => removeCustom(c.name, rm);
-    i.append(left, rm); mine.append(i);
-  }
-  if (!mine.children.length) mine.append(el("p", "empty", "Nothing connected yet."));
-  $("rec").replaceChildren(...data.recommended.map(appCard));
+  if (!data) return;
+  // Remember what had focus (by its label) and each row's scroll, so a refresh changes nothing under the user.
+  const focusLabel = document.activeElement?.getAttribute?.("aria-label");
+  const keep = [...document.querySelectorAll("#shelves .lane")].map((l) => l.scrollLeft);
+  const apps = [...data.recommended, ...data.all];
+  const connected = apps.filter((a) => a.status === "connected");
+  const pending = apps.filter((a) => a.status !== "connected" && (a.status === "waiting" || waiting.has(a.slug)));
+  // Only recommended apps nag to be reconnected; old one-off apps stay findable in search.
+  const expired = data.recommended.filter((a) => a.status === "expired" && !pending.includes(a));
+  const popular = data.recommended.filter((a) => !a.status && !waiting.has(a.slug));
+  const shelves = [];
+  if (pending.length) shelves.push(shelf("waiting", "Waiting for you", pending.map(appTile)));
+  if (expired.length) shelves.push(shelf("expired", "Sign in again", expired.map(appTile)));
+  shelves.push(shelf("connected", "Connected", [...connected.map(appTile), ...data.custom.map(customTile)], "Nothing connected yet."));
+  shelves.push(shelf("popular", "Popular", popular.map(appTile), "You've added every popular app."));
+  shelves.push(shelf("claude", "From Claude Code", (data.claude_code || []).map(claudeTile), "No connectors found in Claude Code."));
+  $("banner").classList.toggle("show", !!data.needs_restart && !bannerHidden);
+  $("shelves").replaceChildren(...shelves);
+  [...document.querySelectorAll("#shelves .lane")].forEach((l, i) => { if (keep[i]) l.scrollLeft = keep[i]; });
+  if (focusLabel) [...document.querySelectorAll("button[aria-label], .lane[aria-label]")].find((n) => n.getAttribute("aria-label") === focusLabel)?.focus({ preventScroll: true });
+  summary(connected.length + data.custom.length, pending.length, expired.length);
   renderSearch();
 }
 
+// Proof in Motion: the connected count rolls to its real value.
+function summary(total, pend, broken) {
+  const s = $("summary"), tail = pend ? ` · ${pend} waiting on you` : "";
+  s.style.color = "";
+  const from = shownCount; shownCount = total;
+  const paint = (n) => {
+    s.replaceChildren(el("b", "", String(n)), document.createTextNode(` connected${tail}`));
+    if (broken) s.append(document.createTextNode(" · "), el("span", "warn", `${broken} need you to sign in again`));
+  };
+  if (reduce || from === total) return paint(total);
+  paint(from);
+  setTimeout(() => { if (shownCount === total) paint(total); }, 900);   // lands on the real number even if frames stall
+  const t0 = performance.now();
+  const step = (t) => { const p = Math.min(1, (t - t0) / 700); paint(Math.round(from + (total - from) * (1 - (1 - p) ** 3))); if (p < 1) requestAnimationFrame(step); };
+  requestAnimationFrame(step);
+}
+
 function renderSearch() {
-  const q = $("search").value.trim().toLowerCase();
-  const box = $("all");
-  if (!q) { box.replaceChildren(el("p", "empty", `Type to search ${data.all.length.toLocaleString()} more apps.`)); return; }
-  const hits = data.all.filter((a) => a.name.toLowerCase().includes(q) || a.slug.includes(q) || (a.about || "").toLowerCase().includes(q)).slice(0, 30);
-  box.replaceChildren(...(hits.length ? hits.map(appCard) : [el("p", "empty", "No app matches that. Try a custom connector below.")]));
+  const q = $("search").value.trim().toLowerCase(), box = $("results");
+    if (!q) { $("search-n").textContent = ""; box.replaceChildren(el("p", "empty", "Results show up here as you type.")); return; }
+  // Name matches first, then matches only in the description.
+  const inName = (a) => a.name.toLowerCase().includes(q) || a.slug.includes(q);
+  const pool = [...data.recommended, ...data.all];
+  const hits = [...pool.filter(inName), ...pool.filter((a) => !inName(a) && (a.about || "").toLowerCase().includes(q))].slice(0, 30);
+  $("search-n").textContent = hits.length ? `${hits.length}${hits.length === 30 ? "+" : ""} found` : "";
+  box.replaceChildren(...(hits.length ? hits.map(appTile) : [el("p", "empty", "No app matches that. Add it as a custom connector below.")]));
 }
 
-async function removeCustom(name, btn) {
-  if (!confirm(`Remove the ${name} connector? Dreyvis will stop using it.`)) return;
-  btn.disabled = true;
-  const r = await fetch("/api/connectors/custom/remove", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name }) });
-  const j = await r.json();
-  if (!r.ok) { btn.disabled = false; alert(j.error); return; }
-  await load();
+async function addApp(a, b) {
+  if (inflight.has(a.slug)) return;
+  inflight.add(a.slug);
+  busy(b, true, "Opening…");
+  tileNote.delete(a.slug);
+  try {
+    const j = await post("/api/connectors/link", { slug: a.slug });
+    const w = window.open(j.url, "_blank");
+    // Electron opens it in your browser and reports null; a blocked browser tab also gives null. Either way, leave a link.
+    tileNote.set(a.slug, { text: w ? "Approve it in the tab that opened." : "Didn't see a sign-in page?", url: j.url, ok: true });
+    waiting.set(a.slug, Date.now());
+    quietUntil = Date.now() + 500; render();
+    // The tile moved to "Waiting for you": follow it with focus and say what happened.
+    [...document.querySelectorAll("#shelves button")].find((x) => x.getAttribute("aria-label") === `Open sign-in: ${a.name}`)?.focus();
+    announce(`Waiting for you to sign in to ${a.name}.`);
+    poll();
+  } catch (e) {
+    tileNote.set(a.slug, { text: e.message });
+    render(); announce(`${a.name}: ${e.message}`);
+  } finally { inflight.delete(a.slug); }
 }
 
+// One shared check while any app is waiting, never one per app.
+let polling = false;
+async function poll() {
+  if (polling) return;
+  polling = true;
+  try {
+    while (waiting.size) {
+      await new Promise((r) => setTimeout(r, 4000));
+      await load(true);
+      const apps = [...data.recommended, ...data.all];
+      for (const [slug, started] of [...waiting]) {
+        const hit = apps.find((x) => x.slug === slug);
+        if (hit && hit.status === "connected") { waiting.delete(slug); tileNote.delete(slug); render(); bloom(`${hit.name} is connected`); announce(`${hit.name} is connected.`); }
+        else if (Date.now() - started > 5 * 60 * 1000) { waiting.delete(slug); render(); }
+      }
+    }
+  } finally { polling = false; }
+}
+
+async function importCC(name, b) {
+  busy(b, true, "Adding…");
+  try { await post("/api/connectors/import", { name }); bannerHidden = false; await load(); bloom(`${plain(name)} added. Restart when you're ready to use it.`); }
+  catch (e) { tileNote.set("cc:" + name, { text: e.message }); busy(b, false, "Try again"); render(); }
+}
+
+function ask(title, text) {
+  const d = $("confirm");
+  $("confirm-h").textContent = title; $("confirm-p").textContent = text;
+  return new Promise((resolve) => {
+    const done = (v) => { d.close(); resolve(v); };
+    $("confirm-yes").onclick = () => done(true);
+    $("confirm-no").onclick = () => done(false);
+    d.oncancel = (e) => { e.preventDefault(); done(false); };
+    d.showModal(); $("confirm-no").focus();
+  });
+}
+
+async function removeCustom(name, b) {
+  if (!(await ask(`Remove ${plain(name)}?`, "Dreyvis stops using it after the next restart. You can add it again any time."))) return;
+  busy(b, true, "Removing…");
+  try { await post("/api/connectors/custom/remove", { name }); bannerHidden = false; await load(); bloom(`${plain(name)} removed.`); }
+  catch (e) { busy(b, false, "Remove"); bloom(e.message); }
+}
+
+let saving = false;
 $("custom").onsubmit = async (e) => {
   e.preventDefault();
-  const msg = $("c-msg"), btn = e.submitter;
-  btn.disabled = true; msg.className = "msg"; msg.textContent = "Adding and restarting Dreyvis's brain…";
+  if (saving) return;
+  const msg = $("c-msg"), url = $("c-url"), b = e.submitter || $("custom").querySelector("button[type=submit]");
+  saving = true; busy(b, true); msg.className = "msg"; msg.textContent = "Saving…";
+  url.removeAttribute("aria-invalid");
   try {
-    const r = await fetch("/api/connectors/custom", { method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: $("c-name").value, url: $("c-url").value, key: $("c-key").value }) });
-    const j = await r.json();
-    if (!r.ok) throw new Error(j.error);
-    $("c-key").value = ""; $("custom").reset();
-    msg.className = "msg ok"; msg.textContent = j.reloaded ? "Added. Dreyvis can use it now." : "Saved. Dreyvis picks it up next time it starts.";
-    await load();
-  } catch (err) { msg.className = "msg err"; msg.textContent = err.message; }
-  btn.disabled = false;
+    await post("/api/connectors/custom", { name: $("c-name").value, url: url.value, key: $("c-key").value });
+    $("custom").reset(); msg.className = "msg ok"; msg.textContent = "Saved. Restart Dreyvis's brain when you're ready to use it.";
+    bannerHidden = false; await load();
+  } catch (err) {
+    msg.className = "msg err"; msg.textContent = err.message;
+    // Point at the field that's wrong and keep everything typed (except the key, which we never keep around).
+    const field = /address/i.test(err.message) ? url : /name/i.test(err.message) ? $("c-name") : url;
+    field.setAttribute("aria-invalid", "true"); field.setAttribute("aria-describedby", "c-msg"); field.focus();
+    // Clear the complaint as soon as the user starts fixing that field.
+    field.addEventListener("input", () => { field.removeAttribute("aria-invalid"); if (msg.classList.contains("err")) { msg.textContent = ""; msg.className = "msg"; } }, { once: true });
+  }
+  saving = false; busy(b, false);
 };
 
+$("restart").onclick = async () => {
+  const b = $("restart");
+  if (b.getAttribute("aria-disabled") === "true") return;
+  busy(b, true, "Restarting…");
+  try { const j = await post("/api/connectors/restart-brain"); await load(); bloom(j.ok ? "Dreyvis restarted with your connectors" : "Saved. Dreyvis loads them next time it starts."); }
+  catch (e) { bloom(e.message); }
+  busy(b, false, "Restart now");
+};
+$("later").onclick = () => { bannerHidden = true; $("banner").classList.remove("show"); document.querySelector("#shelves .lane")?.focus({ preventScroll: true }); };
 $("search").oninput = renderSearch;
+// Pausing the background is remembered on this Mac. One signal: a fixed label plus aria-pressed.
+function setStill(on) {
+  document.body.classList.toggle("still", on); $("still").setAttribute("aria-pressed", String(on));
+  try { localStorage.setItem("dreyvis-still", on ? "1" : "0"); } catch {}
+}
+try { if (localStorage.getItem("dreyvis-still") === "1") setStill(true); } catch {}
+$("still").onclick = () => setStill(!document.body.classList.contains("still"));
 
+let toastTimer;
+function bloom(text) { $("toast-text").textContent = text; $("toast").classList.add("show"); clearTimeout(toastTimer); toastTimer = setTimeout(() => $("toast").classList.remove("show"), 5000); }
+
+let retrying = false;
 async function load(fresh) {
+  retrying = document.activeElement?.closest?.("#summary") != null;
   try {
     const r = await fetch("/api/connectors" + (fresh ? "?fresh=1" : ""));
-    if (!r.ok) throw new Error("Dreyvis didn't answer (" + r.status + ").");
-    data = await r.json();
-    $("load").textContent = ""; $("load").className = "msg";
-    render();
-  } catch (e) { $("load").textContent = e.message + " Is Dreyvis turned on?"; $("load").className = "msg err"; }
+    if (!r.ok) throw new Error();
+    const text = await r.text();
+    if (text === lastJson) return;          // nothing changed: leave the page alone
+    lastJson = text; data = JSON.parse(text); render();
+  } catch {
+    if (data) return;                       // keep showing what we had; the next check will catch up
+    const s = $("summary"); s.style.color = "var(--bad)";
+    const again = btn("Try again", "Try loading connectors again", async (b) => {
+      busy(b, true, "Trying…"); await load();
+      if (!data) { const nb = $("summary").querySelector("button"); nb?.focus(); announce("Still can't reach Dreyvis."); }
+    });
+    s.replaceChildren(document.createTextNode("Couldn't reach Dreyvis. Is it turned on? "), again);
+    if (retrying) again.focus();
+  }
 }
 load();
 </script>

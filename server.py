@@ -968,6 +968,8 @@ async def start_brain_and_speech() -> None:
     # entry itself, and asks us who is working right now. Called at spawn
     # time, so the watcher (started after us in lifespan) has had its chance.
     brain_instance.active_projects = _active_project_names
+    # Warm the Connectors page's data so the first visit doesn't wait on Composio.
+    _spawn(connectors.statuses())
     if os.getenv("JARVIS_BRAIN_AUTOSTART", "1") == "1":
         _spawn(brain_instance.start())
     else:
@@ -6987,7 +6989,10 @@ async def api_connectors(fresh: bool = False):
     needs_restart = declared_connections().servers != LAST_CONNECTIONS.servers
     return {"recommended": recommended, "all": others, "custom": connectors.custom_list(),
             "claude_code": connectors.claude_code_list(),
-            "custom_problems": LAST_CONNECTIONS.problems, "needs_restart": needs_restart}
+            "custom_problems": LAST_CONNECTIONS.problems, "needs_restart": needs_restart,
+            # What the running brain actually started, so a broken connector shows on the page.
+            "brain": {"connected": brain_instance.connected_servers if brain_instance else [],
+                      "failed": brain_instance.failed_servers if brain_instance else []}}
 
 
 @app.post("/api/connectors/link")

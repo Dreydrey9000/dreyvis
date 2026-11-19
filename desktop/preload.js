@@ -199,11 +199,16 @@ window.addEventListener("DOMContentLoaded", () => {
     b.textContent = label;
     b.title = title;
     b.setAttribute("aria-label", title);
+    // Aurora Glass pills, matching the Connectors page (THEME-DECISION.md).
     Object.assign(b.style, {
-      font: "500 14px -apple-system, BlinkMacSystemFont, sans-serif",
-      color: "#cfe0ff", background: "rgba(10,18,32,0.85)", border: "1px solid #1f3352", borderRadius: "8px",
-      padding: "0 16px", height: "36px", cursor: "pointer",
+      font: "600 14px Sora, -apple-system, BlinkMacSystemFont, sans-serif",
+      color: "#e8eefc", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.22)",
+      borderRadius: "999px", padding: "0 16px", height: "36px", cursor: "pointer",
+      backdropFilter: "blur(20px) saturate(140%)", webkitBackdropFilter: "blur(20px) saturate(140%)",
+      boxShadow: "0 8px 24px rgba(0,0,0,0.25)", transition: "background .2s, border-color .2s",
     });
+    b.addEventListener("mouseenter", () => { b.style.background = "rgba(255,255,255,0.16)"; b.style.borderColor = "rgba(90,160,255,0.7)"; });
+    b.addEventListener("mouseleave", () => { b.style.background = "rgba(255,255,255,0.08)"; b.style.borderColor = "rgba(255,255,255,0.22)"; });
     b.addEventListener("focus", () => { b.style.outline = "2px solid #5aa0ff"; b.style.outlineOffset = "2px"; });
     b.addEventListener("blur", () => { b.style.outline = "none"; });
     b.addEventListener("click", () => ipcRenderer.send("dreyvis:show", page));

@@ -69,7 +69,8 @@ To run the server in the background and start it at login, copy `docs/com.drey.d
 Press Cmd+3. Two ways to connect:
 
 - **Apps.** About 40 recommended apps up top, and a search box for all 1,000 Composio apps. Press **Add**, approve in your browser, and the card turns green on its own.
-- **Custom connectors.** Any MCP server with a web address, plus a key if the service gives you one. Dreyvis stores the key in `data/jarvis/connections.json`, which only your Mac user can open, and never displays it again. Saving one restarts Dreyvis's brain to load the new tools. Builds keep running.
+- **Custom connectors.** Any MCP server with a web address, plus a key if the service gives you one. Dreyvis stores the key in `data/jarvis/connections.json`, which only your Mac user can open, and never displays it again. Saving one does not restart anything. The page asks whether to restart Dreyvis's brain now or later. A restart clears the current chat, and builds keep running.
+- **From Claude Code.** Every connector set up in Claude Code (`~/.claude.json`) is listed with an Add button that copies it over exactly as Claude Code runs it.
 
 ## Costs
 
