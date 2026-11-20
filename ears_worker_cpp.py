@@ -15,6 +15,7 @@ import struct
 import subprocess
 import sys
 import tempfile
+import traceback
 import wave
 
 CLI = os.environ.get("WHISPER_CLI", "whisper-cli")
@@ -79,8 +80,8 @@ def main() -> None:
         (n,) = struct.unpack(">I", head)
         try:
             text = transcribe(inp.read(n))
-        except Exception as e:     # one bad clip must not kill the ears
-            print(f"ears_worker_cpp: {e!r}", file=sys.stderr)
+        except Exception:          # one bad clip must not kill the ears
+            traceback.print_exc(file=sys.stderr)
             text = ""
         out.write(json.dumps({"text": text}) + "\n")
         out.flush()
