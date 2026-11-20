@@ -387,6 +387,9 @@ def ensure_tool_token() -> str:
             os.close(fd)
         return token
 
+    if not hasattr(os, "O_NOFOLLOW"):
+        return _adopt_tool_token_windows(path, token)
+
     fd = os.open(str(path), os.O_RDWR | os.O_NOFOLLOW)
     try:
         info = os.fstat(fd)
@@ -406,3 +409,21 @@ def ensure_tool_token() -> str:
         return token
     finally:
         os.close(fd)
+
+
+def _adopt_tool_token_windows(path: Path, token: str) -> str:
+    """Windows has no O_NOFOLLOW, no uids and no mode bits. What keeps the
+    token private there is the folder's access list, so the data directory
+    must sit under the user's own profile (it does for the service; the
+    spike folder on X: is single-user). What is still checked: the name is
+    not a link or junction and is a plain file, so a planted link cannot
+    redirect which file JARVIS trusts. Making a symlink on Windows needs an
+    administrator or Developer Mode, which narrows the race the Unix path
+    closes with one file descriptor."""
+    if path.is_symlink() or os.path.isjunction(path) or not path.is_file():
+        raise OSError(f"{path} is not a regular file")
+    existing = path.read_text(encoding="utf-8", errors="ignore").strip()
+    if existing:
+        return existing
+    path.write_text(token, encoding="utf-8")
+    return token
