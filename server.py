@@ -99,7 +99,8 @@ log = logging.getLogger("jarvis")
 # `kill -USR1 <pid>` prints every thread's stack to the log: how to see what a
 # busy server is doing without root (py-spy cannot attach on macOS without it).
 import faulthandler as _faulthandler, signal as _signal
-_faulthandler.register(_signal.SIGUSR1, all_threads=True)
+if hasattr(_faulthandler, "register"):  # Unix only; Windows has no SIGUSR1
+    _faulthandler.register(_signal.SIGUSR1, all_threads=True)
 
 # ---------------------------------------------------------------------------
 # Config
