@@ -67,7 +67,8 @@ import logging
 import os
 import time
 from dataclasses import dataclass, field
-from datetime import datetime
+import sys
+from datetime import datetime, timezone
 from pathlib import Path
 
 import session_watch
@@ -158,8 +159,18 @@ def _tokens_from(usage) -> Tokens:
 # `fromisoformat` accepts that string happily, so catching only its ValueError
 # left the second call unguarded. Two years of slack at each end covers every
 # UTC offset without needing to know the local one.
-_DAY_MIN = datetime(2, 1, 1).timestamp()
-_DAY_MAX = datetime(9997, 1, 1).timestamp()
+#
+# The bounds are computed from UTC datetimes: a naive `datetime(2, 1, 1)
+# .timestamp()` asks the OS for local time in year 2, and Windows refuses
+# (OSError 22) at import, so the whole server failed to start there. Windows'
+# own `fromtimestamp` also refuses anything before 1970 or after year 3000,
+# so its window is narrower.
+if sys.platform == "win32":
+    _DAY_MIN = datetime(1970, 1, 3, tzinfo=timezone.utc).timestamp()
+    _DAY_MAX = datetime(2999, 1, 1, tzinfo=timezone.utc).timestamp()
+else:
+    _DAY_MIN = datetime(2, 1, 1, tzinfo=timezone.utc).timestamp()
+    _DAY_MAX = datetime(9997, 1, 1, tzinfo=timezone.utc).timestamp()
 
 
 def _epoch(stamp) -> float | None:

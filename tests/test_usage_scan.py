@@ -802,3 +802,14 @@ def test_a_transient_stat_failure_does_not_zero_a_session(tmp_path,
     assert was_read is False
     assert totals.tokens.output == 10, (
         "a transient stat failure reported the session as having spent zero")
+
+
+def test_day_bounds_never_ask_the_os_for_local_time():
+    """Regression, 2026-11-20: the bounds were naive `datetime(2, 1, 1)
+    .timestamp()`, which asks the OS for local time in year 2. Windows raises
+    OSError 22 at import, so the server could not start on the PC. They are
+    UTC now, and each one must be a day `day_key` can name on this platform."""
+    import usage_scan
+    for bound in (usage_scan._DAY_MIN, usage_scan._DAY_MAX):
+        assert isinstance(bound, float)
+        assert len(usage_scan.day_key(bound)) == 10
