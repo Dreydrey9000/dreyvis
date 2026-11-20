@@ -19,7 +19,7 @@ import { initSpecs, refreshSpecs } from "./specs";
 import { initUsage, refreshUsageView } from "./usage";
 import {
   el, row, readout, bar, pill, setTone, statusDot, statusPill, stateStyle,
-  emptyState, flash,
+  emptyState, flash, button,
   type BarParts, type ReadoutParts, type Tone,
 } from "./ui";
 
@@ -54,9 +54,15 @@ function fmtRunTokens(run: RunRow): string {
   return total > 0 ? `${fmtCount(total)} tok` : "—";
 }
 
-function fmtClock(epochSec: number): string {
-  return new Date(epochSec * 1000)
-    .toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+/** When a run started: "9:01pm" today, "Yesterday 9:01pm", "12 Sep 9:01pm".
+ *  A bare clock on yesterday's run made "Last 24 hours: 0" look wrong. */
+function fmtClock(epochSec: number, now = new Date()): string {
+  const d = new Date(epochSec * 1000);
+  if (d.toDateString() === now.toDateString()) return fmtTime(d);
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+  if (d.toDateString() === yesterday.toDateString()) return `Yesterday ${fmtTime(d)}`;
+  return `${d.toLocaleDateString([], { day: "numeric", month: "short" })} ${fmtTime(d)}`;
 }
 
 /** "4:20pm" — the same clock a person would say out loud. */
@@ -271,7 +277,7 @@ function renderUsage(snap: UsageSnapshot | null): void {
     } else {
       parts.push("reset time unknown");
     }
-    if (usable && w.stale && w.age_sec !== null) parts.push(fmtAge(w.age_sec));
+    // How old a stale reading is lives once, next to the "stale" pill above.
     gauge.when.textContent = parts.join(" · ");
   }
 }
@@ -367,7 +373,7 @@ function runsSummary(all: RunRow[], needYou: number): string {
   const parts = [running ? `${plural(running, "build")} running now.` : "Nothing building right now."];
   if (today.length) parts.push(`Today: ${today.length - stopped} succeeded, ${stopped} failed${stopped && !needYou ? ", all redone since" : ""}.`);
   if (needYou) parts.push(`${plural(needYou, "build")} need${needYou === 1 ? "s" : ""} you: tap one to try again.`);
-  if (specsWaiting) parts.push(`${plural(specsWaiting, "spec")} wait${specsWaiting === 1 ? "s" : ""} for your review in the Specs tab.`);
+  if (specsWaiting) parts.push(`${plural(specsWaiting, "spec")} wait${specsWaiting === 1 ? "s" : ""} for your review.`);
   if (specsWaiting === null) parts.push("Checking whether any specs need your review…");
   else if (!needYou && !specsWaiting) parts.push("Nothing needs you.");
   return parts.join(" ");
@@ -425,7 +431,16 @@ function paint(): void {
   const failures = allFailures.slice(0, ATTENTION_LIMIT);
   renderNow(runs.filter((r) => ACTIVE.has(r.status)).length, allFailures.length);
   const summary = document.getElementById("runs-summary");
-  if (summary) summary.textContent = runsSummary(runs, allFailures.length);
+  if (summary) {
+    summary.textContent = runsSummary(runs, allFailures.length);
+    // The next step as a button, not a direction to go find a tab.
+    if (specsWaiting) {
+      const go = button(`Review ${specsWaiting === 1 ? "it" : "them"}`,
+        () => document.getElementById("tab-specs")?.click());
+      go.classList.add("summary-action");
+      summary.append(" ", go);
+    }
+  }
   // The summary already says "Nothing building", so an empty box would only repeat it.
   const activeSection = document.getElementById("active-section");
   if (activeSection) activeSection.hidden = !runs.some((r) => ACTIVE.has(r.status));
@@ -574,13 +589,29 @@ function setupTabs(): void {
       // sitting open and the wrong one for a tab just opened — the numbers
       // would be up to a minute stale at the moment they are looked at.
       if (view === "usage") void refreshUsageView();
+      // Keep the open tab in the address, so a reload or a shared link lands on it.
+      const url = new URL(location.href);
+      if (view === "runs") url.searchParams.delete("tab");
+      else url.searchParams.set("tab", view);
+      history.replaceState(history.state, "", url);
     });
   }
+  const wanted = new URLSearchParams(location.search).get("tab");
+  tabs.find((t) => t.dataset.view === wanted && wanted !== "runs")?.click();
 }
 
 document.addEventListener("DOMContentLoaded", () => {
   void reconcile();
   setupTabs();
+  // The sticky header's height, so focus, pinned columns and the details pane
+  // all start below it instead of hiding under it. 0 when it isn't sticky (phones).
+  const head = document.querySelector<HTMLElement>(".shell-head");
+  if (head) {
+    new ResizeObserver(() => {
+      const h = getComputedStyle(head).position === "sticky" ? head.offsetHeight : 0;
+      document.documentElement.style.setProperty("--head-h", `${h}px`);
+    }).observe(head);
+  }
   // Loads and live-updates in the background regardless of which tab is
   // showing, so switching to Sessions never shows a blank first paint.
   initSessions();

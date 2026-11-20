@@ -91,8 +91,29 @@ export function notifyRunChanged(run: RunRow): void {
   if (costDd) costDd.textContent = costText(run);
 }
 
+/** The open run's row says so (aria-current); every other row does not. */
+function markOpenRow(runId: string | null): void {
+  for (const r of document.querySelectorAll<HTMLElement>("[data-run-id]")) {
+    if (r.dataset.runId === runId) r.setAttribute("aria-current", "true");
+    else r.removeAttribute("aria-current");
+  }
+}
+
+/** On a phone the details land below the list, off screen: bring them up
+ *  and move focus there, so a tap visibly does something. */
+function bringIntoView(host: HTMLElement): void {
+  host.tabIndex = -1;
+  if (host.getBoundingClientRect().top > window.innerHeight * 0.6) {
+    const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    host.scrollIntoView({ block: "start", behavior: still ? "auto" : "smooth" });
+  }
+  // Focus always moves in, so Escape and Tab work from the pane right away.
+  host.focus({ preventScroll: true });
+}
+
 export function closeDetail(): void {
   const was = currentRunId;
+  markOpenRow(null);
   currentRunId = null;
   lastSeq = 0;
   backfillInFlight = false;
@@ -215,12 +236,26 @@ export async function openDetail(runId: string): Promise<void> {
   const host = pane();
   host.hidden = false;
   host.replaceChildren();
+  // Before the fetch, so a failed load never carries the previous run's name
+  // and Escape works in every state, not only after a successful load.
+  host.setAttribute("aria-label", "Run details");
+  host.onkeydown = (e) => { if (e.key === "Escape") { e.preventDefault(); closeDetail(); } };
+  markOpenRow(runId);
 
   let run: RunRow;
   try {
     run = await getRun(runId);
   } catch {
-    host.append(emptyState("Could not load this run."));
+    if (runId !== currentRunId) return;
+    const msg = el("div", "pane-error");
+    msg.setAttribute("role", "alert");
+    msg.append(
+      el("p", undefined, "Couldn't load this run. The server may be busy."),
+      button("Try again", () => { void openDetail(runId); }),
+      button("Close", closeDetail, { quiet: true }),
+    );
+    host.append(msg);
+    bringIntoView(host);
     return;
   }
 
@@ -235,7 +270,6 @@ export async function openDetail(runId: string): Promise<void> {
   close.classList.add("pane-close");
   head.append(dotSlot, el("h2", "pane-title", run.project_name), statusSlot, close);
   host.setAttribute("aria-label", `Run details: ${run.project_name}, ${run.status}`);
-  host.onkeydown = (e) => { if (e.key === "Escape") { e.preventDefault(); closeDetail(); } };
 
   const body = el("div", "pane-body");
 
@@ -263,17 +297,18 @@ export async function openDetail(runId: string): Promise<void> {
 
   const transcript = el("div", "transcript");
   transcript.id = "transcript";
+  // Its own scroll box: a Tab stop with a name, so the keyboard can scroll it.
+  transcript.tabIndex = 0;
+  transcript.setAttribute("role", "region");
+  transcript.setAttribute("aria-label", "Transcript");
 
-  body.append(el("p", "pane-prompt", run.prompt), dl, actions, transcript);
+  // The build prompt can run to pages; fold it so the run's facts come first.
+  const prompt = document.createElement("details");
+  prompt.className = "pane-prompt-fold";
+  prompt.append(el("summary", undefined, "Show the full instructions"), el("p", "pane-prompt", run.prompt));
+  body.append(dl, actions, prompt, transcript);
   host.append(head, body);
-  // On a phone the details land below the list, off screen: bring them up
-  // and move focus there, so a tap visibly does something.
-  if (host.getBoundingClientRect().top > window.innerHeight * 0.6) {
-    const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
-    host.tabIndex = -1;
-    host.scrollIntoView({ block: "start", behavior: still ? "auto" : "smooth" });
-    host.focus({ preventScroll: true });
-  }
+  bringIntoView(host);
 
   // Load the TAIL, not the head — on a long build the last 200 events are the
   // ones you care about.

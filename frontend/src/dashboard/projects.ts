@@ -130,6 +130,9 @@ function paintList(): void {
     const needing = projects.reduce((n, p) => n + (p.needs_you_count > 0 ? 1 : 0), 0);
     badge.textContent = String(needing);
     badge.hidden = needing === 0;
+    const meaning = needing ? `Projects: ${needing} need${needing === 1 ? "s" : ""} you` : "Projects";
+    badge.parentElement?.setAttribute("title", meaning);
+    badge.parentElement?.setAttribute("aria-label", meaning);
   }
   if (!listEl) return;
   listEl.replaceChildren();

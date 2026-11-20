@@ -626,6 +626,10 @@ function tabBadge(count: number): void {
   if (!badge) return;
   badge.textContent = String(count);
   badge.hidden = count === 0;
+  // Say what the number means, on hover and to screen readers.
+  const meaning = count ? `Sessions: ${count} need${count === 1 ? "s" : ""} you` : "Sessions";
+  badge.parentElement?.setAttribute("title", meaning);
+  badge.parentElement?.setAttribute("aria-label", meaning);
 }
 
 function paint(): void {
