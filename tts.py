@@ -56,7 +56,7 @@ async def _start_kokoro() -> asyncio.subprocess.Process:
         KOKORO_PYTHON, str(Path(__file__).parent / "kokoro_worker.py"),
         stdin=asyncio.subprocess.PIPE, stdout=asyncio.subprocess.PIPE,
         env={**os.environ, "VIRTUAL_ENV": str(Path(KOKORO_PYTHON).parent.parent),
-             "PATH": f"{Path(KOKORO_PYTHON).parent}:{os.environ.get('PATH', '')}",
+             "PATH": f"{Path(KOKORO_PYTHON).parent}{os.pathsep}{os.environ.get('PATH', '')}",
              "KOKORO_VOICE": KOKORO_VOICE},
     )
     t0 = time.monotonic()

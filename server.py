@@ -237,11 +237,11 @@ SCAN_BUDGET_SECONDS = float(os.getenv("JARVIS_SCAN_BUDGET", "20"))
 SCAN_CACHE_SECONDS = float(os.getenv("JARVIS_SCAN_CACHE", "300"))
 
 # Roots are overridable so a user whose Desktop is slow, huge or cloud-backed
-# has somewhere to point this. Colon-separated, like PATH.
+# has somewhere to point this. Separated like PATH (":" on Mac, ";" on Windows).
 def _scan_roots() -> list[Path]:
     override = os.getenv("JARVIS_PROJECT_ROOTS", "").strip()
     if override:
-        return [Path(r).expanduser() for r in override.split(":") if r.strip()]
+        return [Path(r).expanduser() for r in override.split(os.pathsep) if r.strip()]
     # ~/My Apps is where Drey keeps his projects (335 repos); without it Dreyvis
     # answered "Drey Design isn't one of my projects" for work he does every day.
     return [DESKTOP_PATH, Path.home() / "My Apps", project_maker.projects_root()]

@@ -19,6 +19,8 @@ from typing import Optional
 log = logging.getLogger("jarvis.ears")
 
 EARS_PYTHON = os.getenv("EARS_PYTHON", "")
+# mlx-whisper on a Mac; ears_worker_cpp.py (whisper.cpp) on the Windows PC.
+EARS_WORKER = os.getenv("EARS_WORKER", "ears_worker.py")
 MAX_SECONDS = 30
 MAX_BYTES = MAX_SECONDS * 16000 * 4      # float32 mono 16 kHz
 _proc: Optional[asyncio.subprocess.Process] = None
@@ -38,7 +40,7 @@ async def transcribe(pcm: bytes, timeout: float = 60.0) -> Optional[str]:
         try:
             if _proc is None or _proc.returncode is not None:
                 _proc = await asyncio.create_subprocess_exec(
-                    EARS_PYTHON, str(Path(__file__).parent / "ears_worker.py"),
+                    EARS_PYTHON, str(Path(__file__).parent / EARS_WORKER),
                     stdin=asyncio.subprocess.PIPE, stdout=asyncio.subprocess.PIPE,
                 )
             _proc.stdin.write(struct.pack(">I", len(pcm)) + pcm)
