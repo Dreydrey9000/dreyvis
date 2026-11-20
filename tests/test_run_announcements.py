@@ -20,6 +20,7 @@ on_the_event_loop_thread` drives a REAL RunExecutor and checks that
 
 import asyncio
 import importlib
+import shlex
 import stat
 import sys
 import threading
@@ -297,7 +298,7 @@ def _fake_claude(tmp_path: Path) -> str:
         "sys.exit(0)\n"
     )
     script.chmod(script.stat().st_mode | stat.S_IEXEC)
-    return f"{sys.executable} {script}"
+    return f"{shlex.quote(sys.executable)} {shlex.quote(str(script))}"
 
 
 @pytest.fixture

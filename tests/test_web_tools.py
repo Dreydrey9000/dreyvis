@@ -18,6 +18,7 @@ and the endpoint is driven through TestClient.
 """
 
 import importlib
+import shlex
 import sys
 from pathlib import Path
 
@@ -32,7 +33,7 @@ FAKE = Path(__file__).parent / "fixtures" / "fake_brain.py"
 def _config(tmp_path, **kw):
     import brain
     return brain.BrainConfig(home=tmp_path / "jarvis",
-                             claude_path=f"{sys.executable} {FAKE}",
+                             claude_path=f"{shlex.quote(sys.executable)} {shlex.quote(str(FAKE))}",
                              turn_timeout=kw.pop("turn_timeout", 5.0),
                              warmup_timeout=kw.pop("warmup_timeout", 10.0),
                              **kw)

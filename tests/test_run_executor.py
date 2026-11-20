@@ -1,6 +1,7 @@
 import asyncio
 import importlib
 import json
+import shlex
 import os
 import stat
 import sys
@@ -27,7 +28,7 @@ def _fake_claude(tmp_path: Path, fixture: Path, exit_code: int = 0,
         f"sys.exit({exit_code})\n"
     )
     script.chmod(script.stat().st_mode | stat.S_IEXEC)
-    return f"{sys.executable} {script}"
+    return f"{shlex.quote(sys.executable)} {shlex.quote(str(script))}"
 
 
 def _fake_claude_lines(tmp_path: Path, lines: list[str], exit_code: int = 0) -> str:
@@ -45,7 +46,7 @@ def _fake_claude_lines(tmp_path: Path, lines: list[str], exit_code: int = 0) -> 
         f"sys.exit({exit_code})\n"
     )
     script.chmod(script.stat().st_mode | stat.S_IEXEC)
-    return f"{sys.executable} {script}"
+    return f"{shlex.quote(sys.executable)} {shlex.quote(str(script))}"
 
 
 @pytest.fixture
@@ -238,7 +239,7 @@ def _script(tmp_path: Path, name: str, body: str) -> str:
     script = tmp_path / name
     script.write_text("#!/usr/bin/env python3\nimport sys, time\n" + body)
     script.chmod(script.stat().st_mode | stat.S_IEXEC)
-    return f"{sys.executable} {script}"
+    return f"{shlex.quote(sys.executable)} {shlex.quote(str(script))}"
 
 
 def _slow_claude(tmp_path: Path, name: str = "slow_claude.py",
@@ -490,7 +491,7 @@ async def test_timeout_keeps_the_collected_stderr(env, tmp_path):
         "sys.stderr.flush()\n"
         "time.sleep(30)\n"
     )
-    ex = mod.RunExecutor(store, claude_path=f"{sys.executable} {script}",
+    ex = mod.RunExecutor(store, claude_path=f"{shlex.quote(sys.executable)} {shlex.quote(str(script))}",
                          grace_sec=1.0)
     run_id = await ex.spawn("hang", "proj", str(tmp), "api", timeout_sec=1)
     run = await ex.wait_for(run_id, timeout=20)

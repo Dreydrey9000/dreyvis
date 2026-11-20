@@ -21,6 +21,9 @@ updated is the one nobody notices.
 from __future__ import annotations
 
 import os
+import shlex
+import sys
+from pathlib import Path
 
 # Every ANTHROPIC_* variable, not just the key: the base URL and the model
 # override redirect a child just as effectively as credentials do.
@@ -46,6 +49,28 @@ SCRUBBED_ENV_KEYS = {"CLAUDECODE"}
 # unboundedly — pass this to every `create_subprocess_exec(..., limit=...)`
 # that reads a Claude Code child's stdout/stderr.
 STREAM_LINE_LIMIT = 64 * 1024 * 1024  # 64 MiB per line
+
+
+def claude_argv(path: str, windows: bool | None = None) -> list[str]:
+    """The Claude Code path as the first words of a command.
+
+    Unix: split like a shell, so a configured "node /x/cli.js" still works.
+    Windows: never shell-split (it eats the backslashes in C:\\Users\\..., the
+    bug that kept the brain from starting on the closet PC), and when the
+    path is npm's claude.cmd shim, run the claude.exe it points at instead.
+    A .cmd goes through cmd.exe, which caps a command line at 8,191
+    characters and mangles quotes, and the brain's system prompt and JSON
+    settings are passed as arguments.
+    """
+    windows = sys.platform == "win32" if windows is None else windows
+    if not windows:
+        return shlex.split(path)
+    shim = Path(path)
+    if shim.suffix.lower() == ".cmd":
+        exe = shim.parent / "node_modules" / "@anthropic-ai" / "claude-code" / "bin" / "claude.exe"
+        if exe.is_file():
+            return [str(exe)]
+    return [path]
 
 
 def child_env(base: dict[str, str] | None = None) -> dict[str, str]:
