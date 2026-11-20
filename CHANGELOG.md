@@ -2,6 +2,7 @@
 
 ## [2026-11-20]
 ### Added
+- Jax Desktop: the assistant can run on the closet PC as an always-on service. A Windows task named "Jax" starts jax_service.py at sign-in and re-checks every 5 minutes; the service restarts the server if it stops, and a JAX_OFF file turns it off. Listening uses whisper.cpp on the PC (ears_worker_cpp.py), because the Mac's mlx-whisper only runs on Apple chips. The Mac reaches it with the `jax-pc` command (a private SSH tunnel to 127.0.0.1:8341).
 - Jax plan (docs/jax): the assistant on the closet PC, reached from anywhere through the VPS behind Google sign-in, with a diagram. A plan only; it waits on Drey's yes.
 
 ### Fixed

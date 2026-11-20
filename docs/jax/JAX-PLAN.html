@@ -46,7 +46,7 @@
     <strong>Jax. Joint Agent Execution.</strong>
     Keep your version, not ChatGPT's "Executive". "Execution" says what the code actually does: it runs Claude, Codex, Grok, GLM and DeepSeek jobs side by side. "Executive" promises judgment the software doesn't have yet. Use one name everywhere. Jax introduces himself as "Jax", and the letters live on the README.
   </div>
-  <p class="warn"><b>The catch: Jax already exists.</b> Your Hermes agent on the VPS is Jax. It already holds your iMessage history and your Omi recordings, and it runs your daily jobs. So this is a merge, not a rename: Dreyvis becomes Jax's voice, his face and his dashboard. You end up with one assistant instead of two.</p>
+  <p class="warn"><b>Update, November 20 afternoon: no merge.</b> Drey chose to keep the two assistants separate. This one is <b>Jax Desktop</b> on the PC; the Hermes agent on the VPS (jax.dreytools.com) stays its own thing. Step 2 is built and tested.</p>
 
   <h2>The setup I recommend</h2>
   <ul class="rooms">
@@ -63,9 +63,8 @@
   <h2>Steps</h2>
   <ol class="steps">
     <li><span class="done">Done tonight.</span> The server started on the PC in its own folder (<code>X:\Workspaces\jax-pc-spike</code>), listening on 127.0.0.1 only. The dashboard, connectors and specs pages answered 200, and the brain started on the PC's own Claude login. Four Windows bugs were found and fixed on the way, and the test server was stopped afterward.</li>
-    <li><b>Make it a real PC service.</b> It starts with Windows, shows as "jax" in Task Manager, and you reach it from the Mac through the old-pc tunnel. Kokoro voice and Whisper ears run on the PC.</li>
-    <li><b>Reachable from anywhere.</b> Add the jax.dreytools.com route behind Google sign-in, then test from your phone on cell data.</li>
-    <li><b>The merge.</b> Rename Dreyvis to Jax everywhere, persona included. One shared memory: Hermes keeps texts, Omi and the scheduled jobs; the PC half takes everything you see and hear.</li>
+    <li><span class="done">Done November 20.</span> A Windows task named Jax keeps the server running on 127.0.0.1:8340 and restarts it if it stops (<code>jax.exe</code> and <code>jax-server.exe</code> in Task Manager). Turn it off by creating <code>X:\Workspaces\jax\logs\JAX_OFF</code>. The voice speaks a sentence in about 1 second and listening takes about 1 second per phrase. From the Mac, <code>jax-pc open</code> opens it at <code>127.0.0.1:8341</code> through a private tunnel. After a reboot it starts once someone signs in to Windows.</li>
+    <li><b>Reachable from anywhere.</b> Give Jax Desktop its own address behind Google sign-in (not jax.dreytools.com, which is Hermes), then test from your phone on cell data.</li>
     <li><b>The "Joint" part.</b> One menu of every brain you pay for, plus the free local models. Jax picks one per job and tells you which.</li>
   </ol>
 
@@ -81,9 +80,9 @@
   <h2>What I need from you</h2>
   <div class="ask">
     <ol>
-      <li>Yes or no on the merge: Dreyvis becomes the voice of the existing Jax.</li>
+      <li>A name for Jax Desktop's web address.</li>
       <li>Yes on Windows security updates (ESU) or moving to Windows 11.</li>
-      <li>Go on steps 2 and 3.</li>
+      <li>Go on step 3. Optional: turn on auto-login on the PC so Jax comes back by itself after a reboot.</li>
     </ol>
   </div>
 </main>

@@ -63,3 +63,6 @@ AGENTS.md
 .venv-ears/
 desktop/node_modules/
 desktop/dist/
+
+# Jax Desktop service logs (PC)
+logs/
