@@ -435,8 +435,11 @@ function paint(): void {
     summary.textContent = runsSummary(runs, allFailures.length);
     // The next step as a button, not a direction to go find a tab.
     if (specsWaiting) {
-      const go = button(`Review ${specsWaiting === 1 ? "it" : "them"}`,
-        () => document.getElementById("tab-specs")?.click());
+      const go = button(`Review ${specsWaiting === 1 ? "it" : "them"}`, () => {
+        const tab = document.getElementById("tab-specs");
+        tab?.click();
+        tab?.focus();  // keep the keyboard's place instead of dropping to the page
+      });
       go.classList.add("summary-action");
       summary.append(" ", go);
     }
@@ -589,15 +592,26 @@ function setupTabs(): void {
       // sitting open and the wrong one for a tab just opened — the numbers
       // would be up to a minute stale at the moment they are looked at.
       if (view === "usage") void refreshUsageView();
-      // Keep the open tab in the address, so a reload or a shared link lands on it.
+      // Keep the open tab in the address, so a reload or a shared link lands
+      // on it, and Back steps to the previous tab.
       const url = new URL(location.href);
       if (view === "runs") url.searchParams.delete("tab");
       else url.searchParams.set("tab", view);
-      history.replaceState(history.state, "", url);
+      if (url.href !== location.href) {
+        if (restoring) history.replaceState(history.state, "", url);
+        else history.pushState(null, "", url);
+      }
     });
   }
-  const wanted = new URLSearchParams(location.search).get("tab");
-  tabs.find((t) => t.dataset.view === wanted && wanted !== "runs")?.click();
+  let restoring = false;
+  const showFromUrl = () => {
+    const wanted = new URLSearchParams(location.search).get("tab") ?? "runs";
+    restoring = true;
+    (tabs.find((t) => t.dataset.view === wanted) ?? tabs[0])?.click();
+    restoring = false;
+  };
+  window.addEventListener("popstate", showFromUrl);
+  if (new URLSearchParams(location.search).get("tab")) showFromUrl();
 }
 
 document.addEventListener("DOMContentLoaded", () => {

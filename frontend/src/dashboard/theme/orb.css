@@ -210,6 +210,17 @@ html { scroll-padding-top: calc(var(--head-h, 0px) + 16px); }
   .shell-tabs.tabs { -webkit-mask-image: linear-gradient(to right, #000 80%, transparent);
     mask-image: linear-gradient(to right, #000 80%, transparent); padding-right: 48px; }
 }
+/* Long names wrap instead of pushing the page sideways on a phone. */
+.panel-head { min-width: 0; flex-wrap: wrap; }
+.panel-title, .panel-meta { min-width: 0; white-space: normal; overflow-wrap: anywhere; }
+/* Room is held for what arrives late, so nothing below jumps: the stats block
+   and the summary (sentence plus its Review button). */
+.shell-stats { min-height: 128px; }
+.runs-summary { min-height: 96px; }
+@media (max-width: 720px) {
+  .runs-summary { min-height: 120px; }
+  button, .btn { min-height: 44px; }
+}
 .pane .kv dt { font-size: 16px; text-transform: none; letter-spacing: 0; color: var(--text-dim); }
 .pane .kv dd { font-size: 16px; }
 .pane-prompt-fold summary { cursor: pointer; min-height: 44px; display: flex; align-items: center;

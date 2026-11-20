@@ -168,7 +168,7 @@
                 <span id="proj-list-meta" class="panel-meta"></span>
               </header>
               <div class="panel-body">
-                <div id="proj-list" class="stack proj-list"></div>
+                <div id="proj-list" class="stack proj-list"><div class="empty">Loading your projects…</div></div>
               </div>
             </section>
           </div>
@@ -195,7 +195,7 @@
                 <span id="specs-projects-meta" class="panel-meta"></span>
               </header>
               <div class="panel-body">
-                <div id="specs-projects" class="stack"></div>
+                <div id="specs-projects" class="stack"><div class="empty">Reading your specs. This can take a few seconds…</div></div>
               </div>
             </section>
 
@@ -210,13 +210,13 @@
             </section>
           </div>
 
-          <div class="split-detail split-stick" tabindex="0" role="region" aria-label="Spec document">
+          <div class="split-detail split-stick">
             <section id="specs-detail" class="panel panel--flush">
               <header class="panel-head">
                 <h2 id="specs-doc-title" class="panel-title">Document</h2>
                 <span id="specs-doc-meta" class="panel-meta"></span>
               </header>
-              <div id="specs-doc-body" class="panel-body specs-doc"></div>
+              <div id="specs-doc-body" class="panel-body specs-doc" tabindex="0" role="region" aria-label="Spec document"></div>
             </section>
           </div>
         </div>

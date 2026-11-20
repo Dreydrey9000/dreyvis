@@ -241,7 +241,20 @@ export async function openDetail(runId: string): Promise<void> {
   // Before the fetch, so a failed load never carries the previous run's name
   // and Escape works in every state, not only after a successful load.
   host.setAttribute("aria-label", "Run details");
-  host.onkeydown = (e) => { if (e.key === "Escape") { e.preventDefault(); closeDetail(); } };
+  host.onkeydown = (e) => {
+    if (e.key === "Escape") { e.preventDefault(); closeDetail(); return; }
+    // On a phone the drawer covers everything, so Tab stays inside it.
+    if (e.key !== "Tab" || !matchMedia("(max-width: 720px)").matches) return;
+    const stops = Array.from(host.querySelectorAll<HTMLElement>(
+      'button:not([hidden]), summary, [tabindex="0"], a[href]'));
+    if (!stops.length) return;
+    const first = stops[0], last = stops[stops.length - 1];
+    if (e.shiftKey && (document.activeElement === first || document.activeElement === host)) {
+      e.preventDefault(); last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault(); first.focus();
+    }
+  };
   markOpenRow(runId);
 
   let run: RunRow;
