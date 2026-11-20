@@ -1,5 +1,19 @@
 # Changelog
 
+## [2026-11-20]
+### Added
+- Jax plan (docs/jax): the assistant on the closet PC, reached from anywhere through the VPS behind Google sign-in, with a diagram. A plan only; it waits on Drey's yes.
+
+### Fixed
+- The server and brain now start on Windows. Four Unix-only spots blocked it: a date limit in the usage scanner, the stack-dump signal, splitting the Claude path with shell rules (which ate the backslashes), and the tool token's Unix-only file calls. On Windows the brain runs the real claude.exe, because npm's claude.cmd goes through cmd.exe's 8,191-character limit.
+- 93 brain and build tests had been failing because the repo path has a space ("My Apps"); the fake Claude path is quoted now.
+- Dashboard: the run drawer is a right-hand drawer again (a style rule had dropped it into the page at the left), opaque, below the sticky header, and full width on phones. A failed load offers Try again and Close, and Escape works in every state.
+- Dashboard: tab badges no longer push the tabs around while counts load, and each badge says what it counts. Only Specs, which waits on Drey, is filled.
+- Dashboard: run times show a date when not from today, so "Last 24 hours: 0" no longer looks wrong next to yesterday's runs.
+
+### Changed
+- Dashboard: the summary sentence is the headline, with one "Review them" button for waiting specs. The plan percentage is the biggest number in the header. The open tab stays in the address after a reload, and the drawer opens with plain facts ("Took 43m 19s", cost in cents), with tokens, model and session folded under "Technical details".
+
 ## [2026-11-19]
 ### Changed
 - Dashboard header and tabs in the orb look: a plain "Dashboard" title, sentence case, no scan lines, grid, corner brackets or numbered tabs. "Plan use" replaces "Subscription", the header counts say "Last 24 hours" because that is what they count, and phones hide them since the summary sentence covers it.

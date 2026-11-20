@@ -33,6 +33,8 @@ flowchart LR
 
 Editable copy: [docs/diagrams/dreyvis.mmd](docs/diagrams/dreyvis.mmd).
 
+**Next: Jax.** The plan to run this on the closet Windows PC and reach it from anywhere is in [docs/jax/JAX-PLAN.md](docs/jax/JAX-PLAN.md), with its diagram at [docs/diagrams/jax-plan-architecture.png](docs/diagrams/jax-plan-architecture.png) (editable: [.drawio](docs/diagrams/jax-plan-architecture.drawio)). The server already starts on Windows; the rest is planned.
+
 ## What you need
 
 - A Mac with Apple Silicon

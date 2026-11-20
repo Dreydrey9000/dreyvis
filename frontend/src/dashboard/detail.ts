@@ -39,7 +39,9 @@ function isActive(run: RunRow): boolean {
 
 function elapsedText(run: RunRow): string {
   if (!run.started_at) return "—";
-  return `${Math.round((run.ended_at ?? Date.now() / 1000) - run.started_at)}s`;
+  // Same "43m 19s" the run list shows, so the two never disagree.
+  const secs = Math.max(0, Math.round((run.ended_at ?? Date.now() / 1000) - run.started_at));
+  return `${Math.floor(secs / 60)}m ${String(secs % 60).padStart(2, "0")}s`;
 }
 
 /** The CLI's cost figure, labelled for what it is. Nothing was billed: the
@@ -47,7 +49,7 @@ function elapsedText(run: RunRow): string {
  * every ANTHROPIC_* variable so it cannot do otherwise. It is kept as a
  * comparable measure of size, never as money spent. */
 function costText(run: RunRow): string {
-  return run.cost_usd > 0 ? `$${run.cost_usd.toFixed(4)} if billed` : "—";
+  return run.cost_usd > 0 ? `$${run.cost_usd.toFixed(2)} if billed (covered by your plan)` : "—";
 }
 
 function bindAction(btn: HTMLButtonElement, run: RunRow): void {
@@ -266,27 +268,32 @@ export async function openDetail(runId: string): Promise<void> {
   const head = el("header", "pane-head");
   dotSlot = statusDot(run.status);
   statusSlot = statusPill(run.status);
-  const close = button("Close", closeDetail, { quiet: true });
+  const close = button("Close", closeDetail);
   close.classList.add("pane-close");
   head.append(dotSlot, el("h2", "pane-title", run.project_name), statusSlot, close);
   host.setAttribute("aria-label", `Run details: ${run.project_name}, ${run.status}`);
 
   const body = el("div", "pane-body");
 
-  const [elapsedDt, elapsedDdEl] = field("elapsed", elapsedText(run));
-  const [costDt, costDdEl] = field("api equivalent", costText(run));
+  const [elapsedDt, elapsedDdEl] = field("Took", elapsedText(run));
+  const [costDt, costDdEl] = field("Cost", costText(run));
   elapsedDd = elapsedDdEl;
   costDd = costDdEl;
 
   const dl = el("dl", "kv");
-  dl.append(
-    elapsedDt, elapsedDdEl,
-    costDt, costDdEl,
-    ...field("tokens", `in ${run.input_tokens} / out ${run.output_tokens} / cache ${run.cache_read_tokens}`),
-    ...field("model", run.model || "—"),
-    ...field("session", run.id),
+  dl.append(elapsedDt, elapsedDdEl, costDt, costDdEl);
+  if (run.error) dl.append(...field("Error", run.error));
+  // The numbers only a developer needs, folded away.
+  const n = (x: number) => x.toLocaleString();
+  const tech = el("dl", "kv");
+  tech.append(
+    ...field("Tokens", `in ${n(run.input_tokens)} / out ${n(run.output_tokens)} / cache ${n(run.cache_read_tokens)}`),
+    ...field("Model", run.model || "—"),
+    ...field("Session", run.id),
   );
-  if (run.error) dl.append(...field("error", run.error));
+  const techFold = document.createElement("details");
+  techFold.className = "pane-prompt-fold";
+  techFold.append(el("summary", undefined, "Technical details"), tech);
 
   const action = document.createElement("button");
   action.type = "button";
@@ -306,7 +313,7 @@ export async function openDetail(runId: string): Promise<void> {
   const prompt = document.createElement("details");
   prompt.className = "pane-prompt-fold";
   prompt.append(el("summary", undefined, "Show the full instructions"), el("p", "pane-prompt", run.prompt));
-  body.append(dl, actions, prompt, transcript);
+  body.append(dl, actions, prompt, techFold, transcript);
   host.append(head, body);
   bringIntoView(host);
 

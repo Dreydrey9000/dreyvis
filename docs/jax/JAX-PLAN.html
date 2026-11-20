@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jax Plan</title>
+<style>
+  :root { --ground:#050508; --lift:#0a0d14; --accent:rgb(14,165,233); --edge:rgba(14,165,233,.18);
+          --text:#e6f1fa; --dim:#93acc0; --ok:#34d399; --todo:#fbbf24; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--ground); color:var(--text);
+         font:16px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+  body::before { content:""; position:fixed; inset:0; pointer-events:none;
+         background:radial-gradient(60% 40% at 50% -10%, rgba(14,165,233,.16), transparent 70%); }
+  main { position:relative; max-width:960px; margin:0 auto; padding:48px 24px 96px; }
+  .mark { color:rgba(14,165,233,.85); letter-spacing:4px; font-size:16px; }
+  h1 { font-size:40px; line-height:1.2; margin:8px 0 16px; font-weight:600; }
+  h2 { font-size:24px; margin:48px 0 16px; font-weight:600; }
+  p, li { max-width:68ch; }
+  .lead { font-size:20px; color:var(--dim); }
+  .vote { border:1px solid var(--edge); border-radius:16px; padding:24px; background:var(--lift); }
+  .vote strong { color:var(--accent); font-size:24px; display:block; margin-bottom:8px; }
+  .warn { border-left:4px solid var(--todo); padding:16px 24px; background:rgba(251,191,36,.06); border-radius:0 12px 12px 0; }
+  figure { margin:0; }
+  figure img { width:100%; height:auto; border-radius:16px; background:#fff; display:block; }
+  figcaption { color:var(--dim); margin-top:8px; }
+  .rooms { display:grid; grid-template-columns:repeat(auto-fit, minmax(240px,1fr)); gap:16px; padding:0; list-style:none; }
+  .rooms li { border:1px solid var(--edge); border-radius:16px; padding:24px; background:var(--lift); }
+  .rooms b { display:block; font-size:20px; margin-bottom:8px; }
+  ol.steps { padding-left:24px; }
+  ol.steps li { margin-bottom:12px; }
+  .done { color:var(--ok); font-weight:600; }
+  .ask { border:1px solid var(--accent); border-radius:16px; padding:24px; }
+  code { background:rgba(14,165,233,.1); padding:0 4px; border-radius:4px; }
+  @media (max-width:640px) { main { padding:32px 16px 64px; } h1 { font-size:32px; } }
+</style>
+</head>
+<body>
+<main>
+  <div class="mark">JAX</div>
+  <h1>One assistant, living on the PC, reachable from anywhere</h1>
+  <p class="lead">Written overnight on November 20, 2026. Step 1 is done. Everything after it needs your yes.</p>
+
+  <h2>My vote on the name</h2>
+  <div class="vote">
+    <strong>Jax. Joint Agent Execution.</strong>
+    Keep your version, not ChatGPT's "Executive". "Execution" says what the code actually does: it runs Claude, Codex, Grok, GLM and DeepSeek jobs side by side. "Executive" promises judgment the software doesn't have yet. Use one name everywhere. Jax introduces himself as "Jax", and the letters live on the README.
+  </div>
+  <p class="warn"><b>The catch: Jax already exists.</b> Your Hermes agent on the VPS is Jax. It already holds your iMessage history and your Omi recordings, and it runs your daily jobs. So this is a merge, not a rename: Dreyvis becomes Jax's voice, his face and his dashboard. You end up with one assistant instead of two.</p>
+
+  <h2>The setup I recommend</h2>
+  <ul class="rooms">
+    <li><b>The PC is the kitchen</b>It does the heavy work: the server, voice, ears, builds and local AI on the graphics card. 32 GB of memory, 876 GB free, a 16 GB graphics card, always on.</li>
+    <li><b>The VPS is the front door</b>Already reachable from anywhere, with a private tunnel into the PC. You sign in with Google and it passes you through. The PC never opens a door to the internet.</li>
+    <li><b>The Mac is the hands</b>Texts and Mac apps can't move to Windows. The PC asks the Mac to do those through the same private tunnel.</li>
+  </ul>
+  <figure>
+    <img src="../diagrams/jax-plan-architecture.png" alt="Diagram: your phone or laptop signs in with Google, reaches the VPS front door, which passes through a private tunnel to the Jax server on the closet PC. The PC runs the orb, voice, builds and local AI, calls the other AI brains, and asks a Mac helper for texts. Hermes Jax on the VPS and the PC share one memory.">
+    <figcaption>Boxes marked PLANNED don't exist yet. Everything else is built and tested.</figcaption>
+  </figure>
+  <p>The other option was Tailscale, a private network app on the PC, the Mac and your phone. It's simple and safe, but the VPS route is already built and tested, and a second way in is one more thing to keep secure. Tailscale stays as the backup if voice feels slow through the VPS.</p>
+
+  <h2>Steps</h2>
+  <ol class="steps">
+    <li><span class="done">Done tonight.</span> The server started on the PC in its own folder (<code>X:\Workspaces\jax-pc-spike</code>), listening on 127.0.0.1 only. The dashboard, connectors and specs pages answered 200, and the brain started on the PC's own Claude login. Four Windows bugs were found and fixed on the way, and the test server was stopped afterward.</li>
+    <li><b>Make it a real PC service.</b> It starts with Windows, shows as "jax" in Task Manager, and you reach it from the Mac through the old-pc tunnel. Kokoro voice and Whisper ears run on the PC.</li>
+    <li><b>Reachable from anywhere.</b> Add the jax.dreytools.com route behind Google sign-in, then test from your phone on cell data.</li>
+    <li><b>The merge.</b> Rename Dreyvis to Jax everywhere, persona included. One shared memory: Hermes keeps texts, Omi and the scheduled jobs; the PC half takes everything you see and hear.</li>
+    <li><b>The "Joint" part.</b> One menu of every brain you pay for, plus the free local models. Jax picks one per job and tells you which.</li>
+  </ol>
+
+  <h2>Blind spots</h2>
+  <ul>
+    <li><b>Windows 10 Home stopped getting free security updates in October 2025.</b> An always-on assistant that runs commands shouldn't live on an unpatched system. Turn on extended updates (ESU) or move to Windows 11 before step 3.</li>
+    <li><b>The license.</b> Dreyvis is built on Ethan Rogers' JARVIS, which bans commercial use. Selling Jax or open sourcing it under a normal license needs his permission or a rewrite of his parts.</li>
+    <li><b>Home power and internet.</b> If the PC or router is off, the kitchen is closed. The VPS can still say "Jax is offline" and keep the Hermes jobs running.</li>
+    <li><b>The VPS is tight.</b> Disk 93% full, swap full. Clear it before it becomes the front door.</li>
+    <li><b>Mac-only features stay on the Mac.</b> The PC version shows them as "needs the Mac", not as broken.</li>
+  </ul>
+
+  <h2>What I need from you</h2>
+  <div class="ask">
+    <ol>
+      <li>Yes or no on the merge: Dreyvis becomes the voice of the existing Jax.</li>
+      <li>Yes on Windows security updates (ESU) or moving to Windows 11.</li>
+      <li>Go on steps 2 and 3.</li>
+    </ol>
+  </div>
+</main>
+</body>
+</html>

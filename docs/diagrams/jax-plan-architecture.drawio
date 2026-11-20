@@ -1,0 +1,88 @@
+<mxfile>
+  <diagram id="autolayout" name="Page-1">
+    <mxGraphModel dx="800" dy="600" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="phone" value="Drey: phone or laptop, anywhere" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="160" y="0" width="120" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="access" value="Google sign-in (Cloudflare Access) - PLANNED" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="160" y="100" width="120" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="vps" value="VPS front door: jax.dreytools.com" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="160" y="190" width="120" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="hermes" value="Hermes Jax (today): iMessage via Photon, Omi, daily jobs" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="20" y="380" width="120" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="relay" value="Private tunnel VPS to PC (built, tested)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="250" y="290" width="120" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="pc" value="Closet PC: Jax server on 127.0.0.1 (booted 11-20)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="340" y="380" width="120" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="dash" value="Orb, voice chat, dashboard, connectors" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="140" y="480" width="120" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="builds" value="Builds: Claude Code + Codex CLIs on the PC" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="280" y="480" width="120" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="voice" value="Ears + voice: Whisper and Kokoro on the PC - PLANNED" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="410" y="480" width="120" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="gpu" value="Local AI on the RX 6800 XT (Ollama, tested)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="550" y="480" width="120" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="brains" value="Other brains: Claude, Codex, Grok, GLM, DeepSeek, Hark" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="690" y="480" width="120" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="mac" value="Mac helper: texts, Mac apps - PLANNED" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="830" y="480" width="120" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="memory" value="One shared Jax memory - PLANNED (merge step)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="0" y="480" width="120" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="e0" value="" style="html=1;rounded=0;" edge="1" parent="1" source="phone" target="access">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="220" y="60"/><mxPoint x="220" y="80"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e1" value="" style="html=1;rounded=0;" edge="1" parent="1" source="access" target="vps">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="220" y="160"/><mxPoint x="220" y="180"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e2" value="" style="html=1;rounded=0;" edge="1" parent="1" source="vps" target="hermes">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="190" y="300"/><mxPoint x="190" y="400"/><mxPoint x="190" y="400"/><mxPoint x="190" y="400"/><mxPoint x="160" y="400"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e3" value="" style="html=1;rounded=0;" edge="1" parent="1" source="vps" target="relay">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="270" y="250"/><mxPoint x="270" y="280"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e4" value="" style="html=1;rounded=0;" edge="1" parent="1" source="relay" target="pc">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="360" y="350"/><mxPoint x="360" y="370"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e5" value="" style="html=1;rounded=0;" edge="1" parent="1" source="pc" target="dash">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="290" y="420"/><mxPoint x="220" y="420"/><mxPoint x="220" y="420"/><mxPoint x="220" y="420"/><mxPoint x="220" y="470"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e6" value="" style="html=1;rounded=0;" edge="1" parent="1" source="pc" target="builds">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="380" y="440"/><mxPoint x="380" y="470"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e7" value="" style="html=1;rounded=0;" edge="1" parent="1" source="pc" target="voice">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="440" y="440"/><mxPoint x="440" y="470"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e8" value="" style="html=1;rounded=0;" edge="1" parent="1" source="pc" target="gpu">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="530" y="430"/><mxPoint x="610" y="430"/><mxPoint x="610" y="430"/><mxPoint x="610" y="430"/><mxPoint x="610" y="470"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e9" value="" style="html=1;rounded=0;" edge="1" parent="1" source="pc" target="brains">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="560" y="410"/><mxPoint x="750" y="410"/><mxPoint x="750" y="410"/><mxPoint x="750" y="410"/><mxPoint x="750" y="470"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e10" value="" style="html=1;rounded=0;" edge="1" parent="1" source="pc" target="mac">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="590" y="400"/><mxPoint x="890" y="400"/><mxPoint x="890" y="400"/><mxPoint x="890" y="400"/><mxPoint x="890" y="470"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e11" value="" style="html=1;rounded=0;" edge="1" parent="1" source="pc" target="memory">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="360" y="450"/><mxPoint x="360" y="460"/><mxPoint x="360" y="460"/><mxPoint x="360" y="460"/><mxPoint x="90" y="460"/><mxPoint x="90" y="460"/><mxPoint x="90" y="460"/><mxPoint x="90" y="470"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e12" value="" style="html=1;rounded=0;" edge="1" parent="1" source="hermes" target="memory">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="60" y="440"/><mxPoint x="60" y="470"/></Array></mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

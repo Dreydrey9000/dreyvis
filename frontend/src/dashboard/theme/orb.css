@@ -198,6 +198,18 @@ html { scroll-padding-top: calc(var(--head-h, 0px) + 16px); }
    into the page flow, at x=0 after all the content. */
 .pane { position: fixed; top: var(--head-h, 0px); background: var(--ground-lift); backdrop-filter: none; }
 .pane .pill, .pane .status-pill, .pane-close { font-size: 16px; }
+/* Counts are information, not actions: only Specs (waiting on him) is filled. */
+.tab-badge { background: rgba(14, 165, 233, 0.16); color: var(--text); }
+#specs-tab-badge { background: var(--accent); color: #03111c; }
+/* The Review button sits on its own line, flush with the sentence. */
+.summary-action { display: flex; width: max-content; margin: 16px 0 0; align-items: center; }
+/* The plan percentage is the header's biggest number. */
+.bar:not(.bar--unknown) .bar-value { font-size: 24px; }
+/* Phones: fade the tab row's right edge so it reads as "more this way". */
+@media (max-width: 720px) {
+  .shell-tabs.tabs { -webkit-mask-image: linear-gradient(to right, #000 80%, transparent);
+    mask-image: linear-gradient(to right, #000 80%, transparent); padding-right: 48px; }
+}
 .pane .kv dt { font-size: 16px; text-transform: none; letter-spacing: 0; color: var(--text-dim); }
 .pane .kv dd { font-size: 16px; }
 .pane-prompt-fold summary { cursor: pointer; min-height: 44px; display: flex; align-items: center;
