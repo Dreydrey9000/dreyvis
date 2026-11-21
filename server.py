@@ -91,6 +91,7 @@ import composio_bridge
 import connectors
 import messages_bridge
 from brain import Brain, BrainConfig, MAX_BOOT_PROJECTS
+import hermes_brain
 from speech import Priority, SpeechScheduler
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(name)s] %(message)s")
@@ -971,7 +972,10 @@ async def start_brain_and_speech() -> None:
     # Exactly the servers `_write_mcp_config` accepted — so what is merged into
     # the config and what the allowlist grants can never disagree.
     config.connections = sorted(LAST_CONNECTIONS.servers)
-    brain_instance = Brain(config)
+    if hermes_brain.use_hermes():
+        brain_instance = hermes_brain.HermesBrain(config)   # Jax Desktop: Hermes Jax is the brain
+    else:
+        brain_instance = Brain(config)
     brain_instance.on_state(_on_brain_state)
     # The other half of the handover: the brain reads the last real journal
     # entry itself, and asks us who is working right now. Called at spawn

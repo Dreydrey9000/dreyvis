@@ -1,31 +1,29 @@
-# SMART brief: Dreyvis to Jax, overnight 2026-11-20
+# SMART brief: move Jax home (overnight 2026-11-21)
 
-Drey went to sleep, so every gap below was filled with the safest choice (listed in the morning report).
+**S** Move Hermes Jax (profile `jax`: texting, memory, jobs) from the VPS to the closet PC's Ubuntu, make the orb use him as its brain, and open the orb to Drey's Mac and phone over Tailscale. For Drey. OUT tonight: the other ~60 VPS apps, the Jackie/Cindy/Marissa profiles, cancelling the VPS, Windows auto-login (his clicks).
 
-## S, Specific
-For Drey: (1) the dashboard fixes re-checked by both inspectors, (2) a read-only recon of the closet PC,
-(3) a plan, as a visual page plus a diagram, for making Jax one assistant that lives on the PC and is reachable
-from anywhere, (4) a name vote, (5) a proof that the assistant's server can start on the PC, private to the PC.
-OUT tonight: renaming the live Mac app, exposing any PC port to the internet, merging with the VPS Jax,
-touching Hermes on the VPS, buying anything, sending messages, interrupting other agents' PC work.
+**M** done checks
+1. Hermes gateway runs on the PC as a service (survives a WSL restart).
+2. PC Jax answers on its local door and recalls a fact from before today.
+3. Orb on the PC answers through PC Jax.
+4. VPS Jax gateway is stopped and disabled; only one Jax answers texts.
+5. A text from Drey's Mac to Jax gets a reply that came from the PC.
+6. Orb opens at an https Tailscale address from the Mac (200).
+7. Every scheduled job is listed as running on PC, kept on VPS, or paused, with a reason.
+8. Nightly backup of Jax's database exists and one run succeeded.
+9. Jax texted Drey that the move is complete.
 
-## M, Measurable (each reported PASS or FAIL)
-1. ui-inspector and ux-inspector both ran on http://127.0.0.1:8340/dashboard; every FAIL is fixed or listed.
-2. Frontend build exits 0 and the cognitive-load count stays at or under 20.
-3. `old-pc hostname` returns the PC's name; the recon file lists Windows version, Python, Git, Node, Tailscale.
-4. `docs/jax/JAX-PLAN.html` and `docs/jax/JAX-PLAN.md` exist; copy gate passes on the .md.
-5. `docs/diagrams/jax-architecture` diagram exists (source plus rendered image).
-6. On the PC, the server answers 200 on 127.0.0.1 only, or the exact blocker is recorded.
-7. Changes committed and pushed; CHANGELOG updated; morning report opened.
+**A** confirmed: root SSH to VPS, SSH to PC, root in PC Ubuntu, 937 GB free, binary copy checksum matches, Tailscale serve already used on the PC, uv + Python 3.11 available. Needs Drey: nothing tonight. Auto-login stays his.
 
-## A, Achievable
-Present: old-pc helper and its keys (Mac), the VPS route, repo, inspectors, copy gate. Needs Drey: anything
-needing his Windows password, app sign-ins, the merge and rename decisions, any public exposure.
+**R** Drey wants one Jax he owns at home, same on text and voice, and to drop the VPS bill later. When in doubt: texting must not break; data must not be lost.
 
-## R, Relevant
-Drey wants one assistant (Jax) that pulls Codex, Claude, Grok, GLM, DeepSeek and the rest together and works
-from anywhere. Judgment calls favor: safe remote access, nothing public, nothing that breaks today's Dreyvis.
+**T** One night. Stop rule: never switch texting until checks 1-3 pass. If check 5 fails for 15 minutes after the switch, roll back (restart VPS gateway, stop PC messaging) and write it up. Never delete anything on the VPS.
 
-## T, Time-bound
-One night. Checkpoint after each M item. Stop rule: if the PC asks for a password, a UAC prompt, or another
-agent is using the desktop, stop that step and note it. Never guess credentials.
+## Ledger
+- [ ] Phase 1 copy + install
+- [ ] Phase 2 twin verified
+- [ ] Phase 3 orb wired
+- [ ] Phase 4 texting switched
+- [ ] Phase 5 jobs + backup
+- [ ] Phase 6 Tailscale orb
+- [ ] Phase 7 text + morning report

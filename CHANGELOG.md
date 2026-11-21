@@ -1,5 +1,10 @@
 # Changelog
 
+## [2026-11-21]
+### Added
+- The orb can use Hermes Jax as its brain (JAX_BRAIN=hermes, hermes_brain.py). The voice you talk to and the Jax you text are then the same assistant with the same memory. The claude CLI brain stays the default, so the Mac app is unchanged.
+- Move map (WAYFINDER-MAP.md) and overnight brief (SMART-BRIEF.md) for moving Jax from the VPS to the closet PC.
+
 ## [2026-11-20]
 ### Added
 - Jax Desktop: the assistant can run on the closet PC as an always-on service. A Windows task named "Jax" starts jax_service.py at sign-in and re-checks every 5 minutes; the service restarts the server if it stops, and a JAX_OFF file turns it off. Listening uses whisper.cpp on the PC (ears_worker_cpp.py), because the Mac's mlx-whisper only runs on Apple chips. The Mac reaches it with the `jax-pc` command (a private SSH tunnel to 127.0.0.1:8341).
