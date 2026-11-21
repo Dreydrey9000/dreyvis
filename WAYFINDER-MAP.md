@@ -34,6 +34,15 @@ Inventory to move (VPS)
 - 11 cloudflared tunnels, about 70 hostnames (list: `~/.cloudflared/config-*.yml`). Client-facing: boxcounts.viraleditz.app, twitch.viraleditz.app, pass.dreytools.com (vault).
 - Crons: root (disk alert, 1bb smoke, vault backup), hermes (notion sync, imsg watchdog, sessions watchdog, x-ray pull, design backup, disk hygiene).
 
+METHOD CHANGE (12:45 ET): import the VPS's whole OS as its own WSL distro named `vps` (Ubuntu 22.04, same packages, units, crons, Python 3.10). Reason: the PC's Ubuntu is 26.04, so system packages and venvs built on 22.04 would break. All distros share one network, so ports behave like one machine.
+- Rehearsal passed in the Ubuntu distro: dockerd with copied data shows 73 containers, 41 volumes; `trek` started and returned 200. All restart policies there were set to "no" so nothing double-runs.
+- `/root/lift/base.sh` copies the VPS root filesystem (minus home/hermes, docker, opt, ghrunner) into `/root/lift/vpsroot`.
+- Then: neutralize it before first boot (wsl.conf systemd=true, clear fstab, remove netplan, mask cloud-init, ufw, fail2ban, ssh, droplet-agent, networkd-wait-online, docker; remove linger; hold all custom units), tar to `X:\WSL\vps-base.tar`, `wsl --import vps X:\WSL\vps ...`.
+- Fill it locally from the Ubuntu distro's copies via a `/mnt/wsl` bind mount: /var/lib/docker, /opt, /home/ghrunner, /home/hermes.
+- NEVER let apps run on both machines at once: Postiz and Warmbly would double-post and double-send.
+- Big-bang cutover: stop everything on the VPS (docker, hermes user services, tunnels, runners), final delta sync, move Jax's live profile from the Ubuntu distro into `vps`, start everything in `vps`, curl all ~70 hostnames. Rollback: start it all on the VPS again.
+- Needs a Windows keepalive task for the `vps` distro like "Drey WSL Firecrawl Keepalive".
+
 Order after the copy lands
 1. Start Docker on the PC with the copied data. Containers come up on the same ports. Check each.
 2. Enable the hermes user services in batches from vps-reference, check each port answers.
