@@ -19,6 +19,29 @@ One Jax on the closet PC. Texting, memory, scheduled jobs, voice and the orb all
 5. **One repo.** Fold the orb code and the Jax setup into one `jax` repo, no secrets in it.
 6. **Backups.** Nightly encrypted copy of state.db off the PC (Backblaze B2).
 
+## FULL VPS LIFT (started 2026-11-21 11:50 ET) - Drey: "move everything off so I can get rid of the VPS"
+Method: make the PC's Ubuntu look like the VPS, then move the public addresses. Same user name, same uid (hermes = 1000 on both now), same paths, same Docker version (29.1.3).
+
+Done so far
+- Docker installed in WSL. WSL memory raised to 26 GB (`.wslconfig`, backup `.wslconfig.bak-20261121`). Restart test passed: Jax, link and texting came back alone.
+- Jax to Mac link rebuilt: `jax-mac-link.socket` forwards 127.0.0.1:22277 to the Mac over Tailscale (100.85.230.27:22). Tested.
+- Bulk copy running as root in WSL: `/root/lift/lift1.sh`, log `/root/lift/lift1.log`. Copies /var/lib/docker (105 GB), /opt, /home/ghrunner, the rest of /home/hermes (never overwrites newer PC files, never touches the live Jax profile), and VPS config into `/root/lift/vps-etc` and `/home/hermes/vps-reference/systemd`. Read-only key `pc-lift-readonly` in the VPS root authorized_keys: REMOVE when the lift is done.
+
+Inventory to move (VPS)
+- 21 compose projects + 10 loose containers (73 containers, 41 volumes).
+- About 45 systemd user services under hermes (dreysfield, dreyos, drechat, livekit-jax, jax-voice, codex-bridge, box counts, downloaders...). Unit files: `vps-reference/systemd`.
+- 17 GitHub Actions runners (/home/ghrunner + system units).
+- 11 cloudflared tunnels, about 70 hostnames (list: `~/.cloudflared/config-*.yml`). Client-facing: boxcounts.viraleditz.app, twitch.viraleditz.app, pass.dreytools.com (vault).
+- Crons: root (disk alert, 1bb smoke, vault backup), hermes (notion sync, imsg watchdog, sessions watchdog, x-ray pull, design backup, disk hygiene).
+
+Order after the copy lands
+1. Start Docker on the PC with the copied data. Containers come up on the same ports. Check each.
+2. Enable the hermes user services in batches from vps-reference, check each port answers.
+3. For each tunnel: stop it on the VPS, start it on the PC, curl every hostname. Vault and VE client tools last, with a fresh final data sync first.
+4. Final sync pass with VPS Docker stopped (short downtime), then VPS services stay off.
+5. Runners, crons, the 11 paused Jax jobs (they watch "the VPS", re-aim them at the PC).
+6. Backup of the PC to Backblaze B2. Remove lift keys. Then the VPS can be cancelled after a quiet week.
+
 ## SWITCHED 2026-11-21 11:30 ET
 Jax runs on the closet PC. Text test answered from DESKTOP-UD6M5TB, 4 minutes of downtime. Work folder and apps (99 GB) copied first. 11 VPS-keeper jobs paused, 69 active. VPS apps reach Jax through a reverse link (jax-brain-link). Rollback: stop and disable the PC unit, rename `hermes-gateway-jax.service.moved-to-pc-20261121` back on the VPS, enable it and the four jax timers.
 
