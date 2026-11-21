@@ -2,6 +2,8 @@
 
 ## [2026-11-21] VPS lift
 ### Changed
+- Nightly encrypted off-PC backup of the clone to Backblaze B2, so the PC is not the only copy once the VPS is cancelled.
+- WSL memory limit set to 20 GB with cache hand-back; SearXNG moved to port 8898 because Hindsight owns 8888.
 - All VPS apps, tunnels, runners and Jax moved into the WSL distro `vps` on the closet PC, so the VPS can be cancelled after a quiet week.
 - Clone clock zone set to UTC and Docker DNS pinned, so schedules and container lookups behave like the VPS.
 ### Fixed
