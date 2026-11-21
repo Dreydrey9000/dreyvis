@@ -1,5 +1,13 @@
 # Changelog
 
+## [2026-11-21] VPS lift
+### Changed
+- All VPS apps, tunnels, runners and Jax moved into the WSL distro `vps` on the closet PC, so the VPS can be cancelled after a quiet week.
+- Clone clock zone set to UTC and Docker DNS pinned, so schedules and container lookups behave like the VPS.
+### Fixed
+- OpenBot rebuilt from its git stash and Oct 26 backup: its worktree had been emptied on Nov 10 and it was running from memory.
+- Jax's door to the Mac listens on port 20243, the port his job scripts use.
+
 ## [2026-11-21]
 ### Changed
 - Jax's texting, memory and jobs now run on the closet PC (switched 2026-11-21, 4 minutes of downtime). The VPS copy is kept for rollback.

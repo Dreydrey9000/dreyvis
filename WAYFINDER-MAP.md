@@ -19,6 +19,12 @@ One Jax on the closet PC. Texting, memory, scheduled jobs, voice and the orb all
 5. **One repo.** Fold the orb code and the Jax setup into one `jax` repo, no secrets in it.
 6. **Backups.** Nightly encrypted copy of state.db off the PC (Backblaze B2).
 
+## VPS LIFT DONE 2026-11-21 16:20 ET
+Everything that ran on the VPS now runs in the WSL distro `vps` on the closet PC, Jax included. The VPS is stopped and disabled, nothing deleted. Full report: `~/My Apps/_reports/VPS-LIFT-REPORT-20261121.md`.
+- Verified after a full clone restart: 63 containers, 45 background apps, 15 tunnels, 17 runners, 80 Jax jobs, 65 of 67 web addresses same as the baseline, Jax text delivered.
+- Open: `hermes.dreythomas.com` and `api.gitnexus.dreythomas.com` DNS, Multica login, PC auto-login, PC SSH allow-list for Tailscale, off-PC backup, SSH door into the clone for cancel day.
+- Do not cancel the VPS before a quiet week and a working backup.
+
 ## FULL VPS LIFT (started 2026-11-21 11:50 ET) - Drey: "move everything off so I can get rid of the VPS"
 Method: make the PC's Ubuntu look like the VPS, then move the public addresses. Same user name, same uid (hermes = 1000 on both now), same paths, same Docker version (29.1.3).
 
