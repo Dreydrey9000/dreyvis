@@ -19,6 +19,16 @@ One Jax on the closet PC. Texting, memory, scheduled jobs, voice and the orb all
 5. **One repo.** Fold the orb code and the Jax setup into one `jax` repo, no secrets in it.
 6. **Backups.** Nightly encrypted copy of state.db off the PC (Backblaze B2).
 
+## SWITCHED 2026-11-21 11:30 ET
+Jax runs on the closet PC. Text test answered from DESKTOP-UD6M5TB, 4 minutes of downtime. Work folder and apps (99 GB) copied first. 11 VPS-keeper jobs paused, 69 active. VPS apps reach Jax through a reverse link (jax-brain-link). Rollback: stop and disable the PC unit, rename `hermes-gateway-jax.service.moved-to-pc-20261121` back on the VPS, enable it and the four jax timers.
+
+Still open:
+1. Push pages built on the PC back to the VPS (DreyOS, jax.dreytools.com dashboards), or move those sites.
+2. Nightly backup of PC Jax off the PC.
+3. Rebuild the 11 paused jobs as plain VPS timers.
+4. Auto-login on the PC (Drey's clicks).
+5. Fix whatever the first day of job runs shows.
+
 ## Where it stands (2026-11-21 morning)
 - Step 1 done: twin built on the PC and verified. Parked (service disabled). Files in `/home/hermes` inside the PC's Ubuntu.
 - Step 2 done differently: the orb uses the REAL Jax on the VPS through `jax-brain-link.service` (ssh -L 8642). One Jax for text and voice today.

@@ -1,6 +1,9 @@
 # Changelog
 
 ## [2026-11-21]
+### Changed
+- Jax's texting, memory and jobs now run on the closet PC (switched 2026-11-21, 4 minutes of downtime). The VPS copy is kept for rollback.
+
 ### Added
 - The orb can use Hermes Jax as its brain (JAX_BRAIN=hermes, hermes_brain.py). The voice you talk to and the Jax you text are then the same assistant with the same memory. The claude CLI brain stays the default, so the Mac app is unchanged.
 - Jax Desktop's orb now uses the real Hermes Jax through a private link from the PC (jax-brain-link), and opens over Tailscale on port 8340. Moving Jax's texting to the PC was tested and held: his jobs need files that only exist on the VPS.
