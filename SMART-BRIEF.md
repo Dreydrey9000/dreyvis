@@ -19,11 +19,15 @@
 
 **T** One night. Stop rule: never switch texting until checks 1-3 pass. If check 5 fails for 15 minutes after the switch, roll back (restart VPS gateway, stop PC messaging) and write it up. Never delete anything on the VPS.
 
-## Ledger
-- [ ] Phase 1 copy + install
-- [ ] Phase 2 twin verified
-- [ ] Phase 3 orb wired
-- [ ] Phase 4 texting switched
-- [ ] Phase 5 jobs + backup
-- [ ] Phase 6 Tailscale orb
-- [ ] Phase 7 text + morning report
+## Result (2026-11-21, 4:25 AM ET)
+Texting was NOT switched. The twin passed, then the test of its "remote hands" on the VPS hung, and the job list showed about half the 80 active jobs need files and services that only exist on the VPS. Stop rule applied. Safe route taken instead.
+
+1. PASS (as a parked standby) Hermes ran as a service on the PC and answered. It is stopped and disabled now so it can never double-answer.
+2. PASS PC copy recalled Drey's name and the Nov 7 YouTube work in 8 s.
+3. PASS Orb answers through Jax. Now wired to the REAL Jax over a private link (PC 127.0.0.1:8642 -> VPS).
+4. NOT DONE (held on purpose) VPS gateway still runs Jax.
+5. NOT DONE texting unchanged, so nothing to test.
+6. PARTIAL Orb opens over Tailscale at http://desktop-ud6m5tb.tail5f2662.ts.net:8340 (200 from the Mac). https (needed for the phone mic) waits on Drey enabling Serve in Tailscale.
+7. PASS Jobs listed: all 80 stay on the VPS, unchanged. Reason: VPS files and services.
+8. PASS Nightly copy: VPS 08:20 UTC makes a safe copy, PC pulls 09:10 UTC. First run: quick_check ok, 376,710 messages.
+9. PASS Jax texted Drey at 4:19 AM (seen in Messages).
