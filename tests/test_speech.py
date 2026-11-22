@@ -1613,3 +1613,103 @@ async def test_the_quiet_room_bar_returns_once_his_audio_has_ended(h):
     await h.ack_all()
     await asyncio.sleep(0.05)
     assert not s.is_speaking
+
+
+# -- quick first clause (voice speed, 2026-11-21) -----------------------------
+
+def _quick(text, step=7):
+    from speech import SentenceSplitter
+    s = SentenceSplitter(quick_first=True)
+    out = []
+    for i in range(0, len(text), step):
+        out += s.feed(text[i:i + step])
+    tail = s.flush()
+    return out + ([tail] if tail else [])
+
+
+def test_quick_first_leaves_a_short_answer_whole():
+    assert _quick("Two plus two is four, boss. Still four.") == ["Two plus two is four, boss.", "Still four."]
+
+
+def test_quick_first_speaks_the_opening_clause_of_a_long_sentence():
+    text = ("Same story as I just said, Drey: yesterday was the usual routine, "
+            "the morning brief, meeting prep and the nightly report. All delivered on time.")
+    out = _quick(text)
+    assert out[0] == "Same story as I just said,"
+    assert " ".join(out) == text                      # nothing lost, nothing repeated
+    assert out[-1] == "All delivered on time."
+
+
+def test_quick_first_skips_a_clause_too_short_to_stand_alone():
+    out = _quick("Yesterday, Friday, was a people day over a schedule day with three long meetings. Done.")
+    assert out[0] == "Yesterday, Friday,"
+
+
+def test_quick_first_is_the_same_in_one_piece_or_many():
+    text = "The daily runs again, plus one open item that has been waiting on you since Tuesday morning. Ok."
+    assert _quick(text, step=1) == _quick(text, step=len(text))
+
+
+def test_quick_first_off_by_default():
+    from speech import SentenceSplitter
+    s = SentenceSplitter()
+    text = "Same story as I just said, Drey, yesterday was the usual routine and nothing else happened. Ok."
+    assert s.feed(text + " ")[0].endswith("nothing else happened.")
+
+
+# -- holding line ("One moment, sir.") ----------------------------------------
+
+@pytest.mark.asyncio
+async def test_holding_line_plays_first_and_the_answer_brings_the_speaking_status(h):
+    u = h.sched.begin_turn()
+    assert h.sched.hold_line(u, "One moment, sir.", b"HOLD") is True
+    assert h.sched.hold_line(u, "Let me check, sir.", b"HOLD2") is False     # one per turn
+    await asyncio.sleep(0.05)
+    assert h.audio() == [(u.id, 0, "One moment, sir.")]
+    assert "status" not in h.types()                  # the apps stay on "searching"
+    assert u.first_sent_at is None and u.filler_sent_at is not None
+    h.sched.feed(u, "It is six forty. ")
+    await h.sched.end_turn(u)
+    await h.ack_all()
+    assert h.audio() == [(u.id, 0, "One moment, sir."), (u.id, 1, "It is six forty.")]
+    states = [m["state"] for m in h.msgs if m["type"] == "status"]
+    assert states == ["speaking", "idle"]
+    assert u.first_sent_at is not None
+
+
+@pytest.mark.asyncio
+async def test_holding_line_never_follows_words_or_a_hush(h):
+    u = h.sched.begin_turn()
+    h.sched.feed(u, "Four. ")
+    assert h.sched.hold_line(u, "One moment, sir.", b"HOLD") is False        # the answer already began
+    await h.sched.end_turn(u)
+    await h.ack_all()
+    u2 = h.sched.begin_turn()
+    await h.sched.barge_in(keep_unread=False, reason="hush (key)")
+    assert h.sched.hold_line(u2, "One moment, sir.", b"HOLD") is False       # hushed: stay quiet
+    await asyncio.sleep(0.05)
+    assert "One moment, sir." not in [t for _, _, t in h.audio()]
+    u3 = h.sched.begin_turn()
+    assert h.sched.hold_line(u3, "One moment, sir.", None) is False          # nothing pre-rendered
+
+
+@pytest.mark.asyncio
+async def test_hush_after_a_queued_holding_line_stops_it(h):
+    u = h.sched.begin_turn()
+    h.sched.hold_line(u, "One moment, sir.", b"HOLD")
+    await h.sched.barge_in(keep_unread=False, reason="hush (key)")           # before the pump ran
+    await asyncio.sleep(0.05)
+    assert h.audio() == []
+
+
+@pytest.mark.asyncio
+async def test_say_that_again_skips_the_holding_line(h):
+    u = h.sched.begin_turn()
+    h.sched.hold_line(u, "One moment, sir.", b"HOLD")
+    h.sched.feed(u, "It is six forty. ")
+    await h.sched.end_turn(u)
+    await h.ack_all()
+    assert await h.sched.replay_last() is True
+    await h.ack_all()
+    assert [t for _, _, t in h.audio()][-1] == "It is six forty."
+    assert [t for _, _, t in h.audio()].count("One moment, sir.") == 1

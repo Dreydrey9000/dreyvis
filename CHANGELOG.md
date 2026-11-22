@@ -1,5 +1,23 @@
 # Changelog
 
+## [2026-11-21] Voice: still thinking line
+### Added
+- Timer line (`JAX_STILL_THINKING=1`, threshold `JAX_STILL_THINKING_SEC`, default 8): a voice turn that has said nothing after 8 seconds and used no tool gets one pre-rendered line ("Still thinking, sir." and two variants) plus status `searching` with label "Still thinking". Covers slow brain replies and provider outages, which were silent for up to 4 minutes. One per turn, never with the holding line, cancelled by a hush, never sent to the brain.
+- Test-only switch: a turn containing "slow brain test" is held silent for the seconds in `data/test_brain_delay_sec`, only while that file exists. Used to prove the line live, then removed.
+### Fixed
+- A brain turn that Hermes ends with an error (provider failed after its retries) was silent. Jax now says "Sorry, sir, I can't reach my brain right now." The same line replaces "My language systems returned an error, sir. Check the server log."
+
+## [2026-11-21] Voice speed
+### Changed
+- A long first sentence is voiced opening clause first (`JARVIS_FAST_FIRST_AUDIO=1`), because the local voice takes as long as the text is long. Brain first word to first sound went from about 2.0s to about 1.0s.
+- The Hermes brain can roll its voice thread (`HERMES_VOICE_THREAD=rolling`): a new small thread after 30 quiet minutes or 60k tokens, with the last six exchanges carried as a recap. The old thread had reached 125k tokens a turn.
+- The Hermes brain keeps one HTTP connection open instead of building a new client per turn (about 0.18s a turn).
+- The 0.6s first-line hold is skipped for the Hermes brain, which never reports tool calls, so the hold was silence for nothing.
+### Added
+- Holding line (`JAX_HOLDING_LINE=1`): when the Hermes brain starts a tool before saying anything, Jax says one short pre-rendered line ("One moment, sir."), so a 12 to 37 second lookup is not silent. Never on direct answers, one per turn, cancelled by a hush, never sent to the brain, skipped by "say that again".
+- New `/ws/voice` status `{"type":"status","state":"searching","label":"Searching memory"}` when a lookup starts, so the apps can show a searching animation. The web orb ignores it.
+- Log lines that split the wait: `latency:` now shows `to_voice`, plus `tts:` and `hermes turn:` lines.
+
 ## [2026-11-21] VPS lift
 ### Changed
 - Nightly encrypted off-PC backup of the clone to Backblaze B2, so the PC is not the only copy once the VPS is cancelled.

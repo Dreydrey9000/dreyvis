@@ -633,7 +633,7 @@ async def _synth_for_speech(text: str) -> Optional[bytes]:
         return None
     _session_tokens["tts_calls"] += 1
     _append_usage_entry(0, 0, "tts")
-    log.debug(f"tts: {len(text)} chars, first byte {r.first_byte_sec:.2f}s, total {r.total_sec:.2f}s")
+    log.info(f"tts: {len(text)} chars in {r.total_sec:.2f}s")
     return r.audio
 
 
@@ -958,8 +958,11 @@ def _active_project_names() -> list[str]:
 async def start_brain_and_speech() -> None:
     global brain_instance, speech, _tts_client
     _tts_client = httpx.AsyncClient(timeout=15.0)
+    # JARVIS_FAST_FIRST_AUDIO=1: a long first sentence is voiced opening clause
+    # first, so the first sound does not wait for the whole sentence.
     speech = SpeechScheduler(lambda t: _synth_for_speech(t), _voice_emit, prepare=strip_markdown_for_tts,
-                             transport_ready=lambda: bool(voice_clients))
+                             transport_ready=lambda: bool(voice_clients),
+                             quick_first=os.getenv("JARVIS_FAST_FIRST_AUDIO", "").strip() == "1")
     await speech.start()
     # ensure_layout() rather than ensure_brain_home(): the persona's
     # `@MEMORY.md` import needs the index to exist, and the memory tools
@@ -985,6 +988,7 @@ async def start_brain_and_speech() -> None:
     _spawn(connectors.statuses())
     # Load the voice now, not on the first reply (QuickSilver fix, 2026-11-18).
     _spawn(tts.warm_kokoro())
+    _spawn(_prerender_holding_lines())
     if os.getenv("JARVIS_BRAIN_AUTOSTART", "1") == "1":
         _spawn(brain_instance.start())
     else:
@@ -1645,6 +1649,125 @@ class _OneLinePerTurn:
             self._sink(text)
 
 
+# -- "One moment, sir." (JAX_HOLDING_LINE=1) -----------------------------------
+# A lookup can take 12 to 37 seconds of silence. When the Hermes brain starts a
+# tool before it has said anything, the apps are told (status "searching") and,
+# with the switch on, one short line is spoken. The lines are voiced once at
+# startup, so playing one costs nothing. They are never sent to the brain.
+HOLDING_LINES = ("One moment, {h}.", "Let me check, {h}.", "Checking now, {h}.", "Give me a second, {h}.")
+_holding_audio: list[tuple[str, bytes]] = []
+_holding_next = 0
+
+
+def holding_line_enabled() -> bool:
+    return os.getenv("JAX_HOLDING_LINE", "").strip() == "1"
+
+
+def _honorific() -> str:
+    return os.getenv("HONORIFIC", "sir").strip() or "sir"
+
+
+async def _voice_lines(templates: tuple[str, ...]) -> list[tuple[str, bytes]]:
+    """Voice short fixed lines once, in Jax's own voice, so playing one costs nothing."""
+    voiced: list[tuple[str, bytes]] = []
+    for template in templates:
+        line = template.format(h=_honorific())
+        try:
+            r = await tts.synthesize_chunk(line, api_key=FISH_API_KEY, voice_id=FISH_VOICE_ID,
+                                           client=_tts_client)
+        except Exception as e:
+            log.warning(f"spoken line {line!r} could not be voiced: {e}")
+            continue
+        if r is not None:
+            voiced.append((line, r.audio))
+    return voiced
+
+
+async def _prerender_holding_lines() -> None:
+    if holding_line_enabled():
+        _holding_audio.extend(await _voice_lines(HOLDING_LINES))
+        log.info("holding lines ready: %d of %d", len(_holding_audio), len(HOLDING_LINES))
+    if still_thinking_enabled():
+        _still_audio.extend(await _voice_lines(STILL_LINES))
+        log.info("still-thinking lines ready: %d of %d", len(_still_audio), len(STILL_LINES))
+
+
+def _lookup_started(utt, tool: str = "") -> None:
+    """The brain began a tool call. Only matters while the turn is still silent."""
+    global _holding_next
+    if speech is None or utt.cancelled or utt.closed or any(not c.filler for c in utt.chunks):
+        return
+    label = hermes_brain.lookup_label(tool)
+    _spawn(_voice_emit({"type": "status", "state": "searching", "label": label}))
+    if _holding_audio and not utt.chunks:
+        line, audio = _holding_audio[_holding_next % len(_holding_audio)]
+        if speech.hold_line(utt, line, audio):
+            _holding_next += 1
+            log.info("holding line: %r (%s, tool %s)", line, label, tool or "unknown")
+
+
+# -- "Still thinking, sir." (JAX_STILL_THINKING=1) -----------------------------
+# A turn with no tool call can go quiet too: the brain sometimes takes 11 to 17
+# seconds for its first word, and when the model provider is down Hermes keeps
+# retrying for minutes. If a turn has said nothing (no words, no holding line)
+# after STILL_THINKING_SEC, one short ready-made line is spoken. Plain answers
+# on 2026-11-21 handed their first words to the voice in 1.7 to 7.4 seconds,
+# so the default of 8 seconds does not fire on them. Same rules as the holding
+# line: one per turn, cancelled by a hush, never sent to the brain.
+STILL_LINES = ("Still thinking, {h}.", "Still working on it, {h}.", "Bear with me, {h}.")
+STILL_LABEL = "Still thinking"
+_still_audio: list[tuple[str, bytes]] = []
+_still_next = 0
+
+
+def still_thinking_enabled() -> bool:
+    return os.getenv("JAX_STILL_THINKING", "").strip() == "1"
+
+
+def still_thinking_after() -> float:
+    try:
+        return max(1.0, float(os.getenv("JAX_STILL_THINKING_SEC", "8")))
+    except ValueError:
+        return 8.0
+
+
+def _still_thinking(utt) -> bool:
+    """The timer ran out. Speak one line, but only if the turn is still silent,
+    not hushed, and the one at the mouth (a queued turn's line would play late)."""
+    global _still_next
+    if (speech is None or not _still_audio or utt.cancelled or utt.closed
+            or utt.chunks or not speech.is_current(utt)):
+        return False
+    line, audio = _still_audio[_still_next % len(_still_audio)]
+    _spawn(_voice_emit({"type": "status", "state": "searching", "label": STILL_LABEL}))
+    if not speech.hold_line(utt, line, audio, only_current=True):
+        return False
+    _still_next += 1
+    log.info("still thinking: %r", line)
+    return True
+
+
+async def _still_thinking_timer(utt, after: float) -> None:
+    await asyncio.sleep(after)
+    _still_thinking(utt)
+
+
+# TEST ONLY: proves the line live without a real outage. A turn is held in
+# silence only when this file holds a number of seconds AND the words
+# "slow brain test" were said, so a real question is never slowed. Delete the
+# file to turn it off; no restart needed.
+_TEST_BRAIN_DELAY_FILE = Path(__file__).parent / "data" / "test_brain_delay_sec"
+
+
+def _test_brain_delay(text: str) -> float:
+    if "slow brain test" not in text.lower():
+        return 0.0
+    try:
+        return min(60.0, max(0.0, float(_TEST_BRAIN_DELAY_FILE.read_text().strip())))
+    except (OSError, ValueError):
+        return 0.0
+
+
 async def _handle_utterance(text: str) -> None:
     """One user utterance → one brain turn → streamed speech. Runs as a task so
     the socket loop keeps receiving `played` acks and interim text meanwhile."""
@@ -1664,15 +1787,31 @@ async def _handle_utterance(text: str) -> None:
     # A staged text goes out only if THESE words, his next ones, are a yes.
     messages_bridge.heard(text)
     utt = speech.begin_turn()
+    still = (_spawn(_still_thinking_timer(utt, still_thinking_after()))
+             if still_thinking_enabled() and _still_audio else None)
     try:
         try:
             try:
-                hold = _OneLinePerTurn(lambda d: speech.feed(utt, d))
+                delay = _test_brain_delay(text)
+                if delay:
+                    log.info("TEST: holding this turn silent for %.1fs (slow brain test)", delay)
+                    await asyncio.sleep(delay)
+                # The hold exists to see whether a tool call follows the first
+                # line. The Hermes brain never reports one, so there it was
+                # 0.6s of silence for nothing.
+                via_hermes = hermes_brain.use_hermes()
+                hold = _OneLinePerTurn(lambda d: speech.feed(utt, d),
+                                       hold_for=0.0 if via_hermes else 0.6)
+                # Hermes names the tool it started; that drives "searching" and
+                # the holding line, and leaves what Jax says untouched.
+                on_tool = (lambda tool="": _lookup_started(utt, tool)) if via_hermes else hold.tool_started
                 result = await brain_instance.turn(text, origin="user",
                                                    on_delta=hold.delta,
-                                                   on_tool=hold.tool_started)
+                                                   on_tool=on_tool)
                 hold.finish()    # the one line this turn is allowed
             finally:
+                if still is not None:
+                    still.cancel()          # the turn is over; no late "still thinking"
                 await speech.end_turn(utt)  # a turn that never ends would wedge the mouth
         except Exception as e:
             log.error(f"brain turn failed: {e}", exc_info=True)
@@ -1683,7 +1822,8 @@ async def _handle_utterance(text: str) -> None:
             await speech.say(f"I've hit the usage limit until {_fmt_reset(resets)}, sir.", Priority.NORMAL)
         elif result.stop_reason == "error":
             log.error(f"brain error: {result.error}")
-            await speech.say("My language systems returned an error, sir. Check the server log.",
+            # Plain words: the usual cause is the model provider failing (a Z.AI 502).
+            await speech.say(f"Sorry, {_honorific()}, I can't reach my brain right now.",
                              Priority.NORMAL)
         elif result.stop_reason in ("timeout", "died", "not_running"):
             await speech.say("I lost my train of thought, sir. Say that again?", Priority.NORMAL)
@@ -1694,8 +1834,13 @@ async def _handle_utterance(text: str) -> None:
         # wait for playback so the latency line is accurate rather than early.
         await speech.wait_for(utt, timeout=120.0)
         first_audio = (utt.first_sent_at - t0) if utt.first_sent_at is not None else None
-        log.info("latency: first_delta=%s first_audio=%s turn=%.2fs ctx=%d out=%d tools=%s",
+        first_words = (utt.first_chunk_at - t0) if utt.first_chunk_at is not None else None
+        if utt.filler_sent_at is not None:
+            log.info("latency: holding line sent at %.2fs", utt.filler_sent_at - t0)
+        # brain first word -> first words handed to the voice -> first audio sent
+        log.info("latency: first_delta=%s to_voice=%s first_audio=%s turn=%.2fs ctx=%d out=%d tools=%s",
                  f"{result.first_delta_sec:.2f}s" if result.first_delta_sec is not None else "none",
+                 f"{first_words:.2f}s" if first_words is not None else "none",
                  f"{first_audio:.2f}s" if first_audio is not None else "none",
                  result.duration_sec, result.context_tokens, result.output_tokens, result.tools)
     finally:
@@ -6668,6 +6813,8 @@ async def voice_handler(ws: WebSocket):
         {"type": "stop"}                             halt playback, empty the queue
         {"type": "drop_queued"}                      keep the playing chunk, drop the rest
         {"type": "status", "state": "thinking"|"speaking"|"idle"}
+        {"type": "status", "state": "searching", "label": "Searching memory"}
+                                                     the brain started a lookup; "speaking" follows
         {"type": "text", "text": "..."}              a chunk TTS could not voice
 
     Run lifecycle events are published on /ws/runs, not here.

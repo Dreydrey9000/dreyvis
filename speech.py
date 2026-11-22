@@ -31,16 +31,30 @@ def _word_before(text: str, i: int) -> str:
     return text[j:i]
 
 
+QUICK_WHOLE_MAX = 64     # a first sentence this short is spoken whole
+QUICK_HEAD_MIN = 16      # the opening clause must be at least this long to stand alone
+
+
 class SentenceSplitter:
-    def __init__(self, first_chunk_max: int = 160, first_chunk_min: int = 40):
+    def __init__(self, first_chunk_max: int = 160, first_chunk_min: int = 40,
+                 quick_first: bool = False):
+        """`quick_first`: when the first sentence is long, speak its opening
+        clause on its own. The voice takes about as long as the text is long
+        (measured 2026-11-21: 0.8s for 27 characters, 2.8s for 157), so a short
+        first piece is what gets the first sound out early."""
         self._buf = ""
         self.emitted = 0
         self._first_chunk_max = first_chunk_max
         self._first_chunk_min = first_chunk_min
+        self._quick_first = quick_first
 
     def feed(self, delta: str) -> list[str]:
         self._buf += delta
         out: list[str] = []
+        if self._quick_first and self.emitted == 0:
+            cut = self._quick_first_cut(self._buf)
+            if cut:
+                out.append(self._take(cut))
         while True:
             cut = self._boundary(self._buf)
             if cut is None:
@@ -57,6 +71,25 @@ class SentenceSplitter:
             if cut:
                 out.append(self._take(cut))
         return [c for c in out if c]
+
+    def _quick_first_cut(self, text: str) -> Optional[int]:
+        """Where to end the very first piece early, or None to carry on as usual.
+        Only once the first sentence is known to be long: a short answer is
+        never chopped at its comma."""
+        end = self._boundary(text)
+        if end is not None and end <= QUICK_WHOLE_MAX:
+            return None                              # short sentence: say it whole
+        if end is None and len(text) < QUICK_WHOLE_MAX:
+            return None                              # too early to tell
+        limit = end if end is not None else len(text)
+        best = None
+        for sep in _CLAUSE_BREAKS:
+            pos = text.find(sep, max(0, QUICK_HEAD_MIN - len(sep.rstrip())))
+            if 0 <= pos < limit - len(sep):
+                cut = pos + len(sep.rstrip())
+                if cut >= QUICK_HEAD_MIN and (best is None or cut < best):
+                    best = cut
+        return best
 
     @staticmethod
     def _first_strong_break(text: str, min_pos: int) -> Optional[int]:
@@ -280,6 +313,7 @@ class Chunk:
     audio: Optional[bytes] = None
     ready: bool = False
     notice: bool = False        # this chunk's failure was the third in a row: warn after it
+    filler: bool = False        # a holding line ("One moment, sir."), not part of the answer
     earliest_ack: float = 0.0   # no honest ack can arrive before this (see ACK_FLOOR_FACTOR)
 
 
@@ -308,7 +342,9 @@ class Utterance:
                                                  # failure, never a genuine user cancel
     paused_at: Optional[float] = None
     resumes: int = 0
-    first_sent_at: Optional[float] = None
+    first_sent_at: Optional[float] = None       # first piece of the ANSWER sent (never a holding line)
+    filler_sent_at: Optional[float] = None      # when a holding line went out, if one did
+    first_chunk_at: Optional[float] = None      # when the first words were handed to the voice
     last_progress_at: Optional[float] = None    # last send or ack; the ack watchdog reads it
     alias: Optional["Utterance"] = None         # a batched LOW item points at the merged utterance
     splitter: SentenceSplitter = field(default_factory=SentenceSplitter)
@@ -359,6 +395,7 @@ class SpeechScheduler:
                  stale_after: float = 60.0, echo_window: float = 6.0,
                  batch_settle: float = 2.0, ack_timeout: float = 45.0,
                  transport_ready: Optional[Callable[[], bool]] = None,
+                 quick_first: bool = False,
                  bridges: tuple = BRIDGES, cancel_words: tuple = CANCEL_WORDS,
                  clock: Callable[[], float] = time.monotonic):
         """`clock` drives scheduling decisions only; `wait_for` and
@@ -375,6 +412,7 @@ class SpeechScheduler:
         self._emit_lock = asyncio.Lock()
         self.batch_settle = batch_settle       # LOW items collect this long before flushing
         self._prepare = prepare or (lambda s: s)
+        self.quick_first = quick_first         # see SentenceSplitter
         self.prefetch = prefetch
         self.batch_interval = batch_interval
         self.pause_after = pause_after
@@ -459,7 +497,8 @@ class SpeechScheduler:
     # ── inputs ─────────────────────────────────────────────────────────
     def _new(self, priority: Priority, kind: str, immediate: bool) -> Utterance:
         u = Utterance(id=self._next_id, priority=priority, kind=kind,
-                      created=self._clock(), immediate=immediate)
+                      created=self._clock(), immediate=immediate,
+                      splitter=SentenceSplitter(quick_first=self.quick_first))
         self._next_id += 1
         self.utterances[u.id] = u
         self._evict_history()
@@ -494,6 +533,25 @@ class SpeechScheduler:
             return
         for text in utt.splitter.feed(delta):
             self._add_chunk(utt, text)
+
+    def is_current(self, utt: Utterance) -> bool:
+        """Whether `utt` is the one at the mouth right now (not queued behind another)."""
+        return self._current is utt
+
+    def hold_line(self, utt: Utterance, text: str, audio: Optional[bytes], *,
+                  only_current: bool = False) -> bool:
+        """Say a ready-made holding line at the front of a turn that has said
+        nothing yet (the brain went off to look something up). At most one per
+        turn, and only before any answer text exists. It rides in the turn's
+        own utterance, so a hush or barge-in cancels it with everything else,
+        and it never flips the "speaking" status: the answer does that."""
+        if utt.cancelled or utt.closed or utt.chunks or not audio:
+            return False
+        if only_current and self._current is not utt:
+            return False                 # queued behind another turn: it would play late
+        utt.chunks.append(Chunk(text, audio=audio, ready=True, filler=True))
+        self._kick()
+        return True
 
     async def end_turn(self, utt: Utterance) -> None:
         if not utt.cancelled:
@@ -775,12 +833,13 @@ class SpeechScheduler:
         Returns False when nothing has been said yet this session.
         """
         u = self._last_spoken
-        if u is None or not u.chunks:
+        said = [c for c in u.chunks if not c.filler] if u is not None else []   # the answer, not "one moment"
+        if not said:
             return False
-        texts = [c.text for c in u.chunks]
-        if all(c.audio is not None for c in u.chunks):
+        texts = [c.text for c in said]
+        if all(c.audio is not None for c in said):
             replay = self._new(Priority.NORMAL, "say", immediate=True)
-            for c in u.chunks:
+            for c in said:
                 replay.chunks.append(Chunk(c.text, audio=c.audio, ready=True))
             replay.closed = True
             self._pending.append(replay)
@@ -886,6 +945,8 @@ class SpeechScheduler:
     # ── internals ──────────────────────────────────────────────────────
     def _add_chunk(self, utt: Utterance, text: str) -> None:
         chunk = Chunk(text)
+        if utt.first_chunk_at is None:
+            utt.first_chunk_at = self._clock()
         utt.chunks.append(chunk)
         self._spawn(self._synthesize(utt, chunk))
 
@@ -1160,7 +1221,8 @@ class SpeechScheduler:
                     await self._send({"type": "text", "text": "My voice is failing, sir."}, u)
                 progressed = True
                 continue
-            await self._set_speaking(True)
+            if not chunk.filler:
+                await self._set_speaking(True)
             async with self._emit_lock:
                 if u.cancelled:                 # a barge-in landed while we waited
                     break
@@ -1171,7 +1233,9 @@ class SpeechScheduler:
                 previous = u.chunks[idx - 1].earliest_ack if idx > 0 else 0.0
                 chunk.earliest_ack = max(previous, now) + ack_floor_seconds(chunk.audio)
                 u.sent = idx
-                if u.first_sent_at is None:
+                if chunk.filler:
+                    u.filler_sent_at = now
+                elif u.first_sent_at is None:
                     u.first_sent_at = now
                 u.last_progress_at = now
                 try:
